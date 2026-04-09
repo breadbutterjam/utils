@@ -172,6 +172,7 @@
         function App() {
             const { addToast } = useToast();
             const [shortMode, setShortMode] = useState(false);
+            const [activeRowId, setActiveRowId] = useState(null);
 
             const [rows, setRows] = useState([
                 {
@@ -268,11 +269,12 @@
                 );
             };
 
-            const copyToClipboard = (text, label) => {
+            const copyToClipboard = (text, label, rowId) => {
                 if (!text) {
                     addToast(`Please enter a ${label} to copy`, "error");
                     return;
                 }
+                setActiveRowId(rowId);
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(text)
                         .then(() => addToast(`${label} copied to clipboard`, "success"))
@@ -334,7 +336,7 @@
                                 <div className="relative w-full overflow-x-auto">
                                     <table className="w-full caption-bottom text-sm text-left">
                                         <thead className="[&_tr]:border-b border-slate-200">
-                                            <tr className="border-b transition-colors hover:bg-slate-100/50">
+                                            <tr className="border-b transition-colors">
                                                 <th className="h-12 px-4 text-left align-middle font-medium text-slate-500 w-[15%] min-w-[150px]">Designation</th>
                                                 <th className="h-12 px-4 text-left align-middle font-medium text-slate-500 w-[15%] min-w-[150px]">Organisation</th>
                                                 <th className="h-12 px-4 text-left align-middle font-medium text-slate-500 w-[12%] min-w-[120px]">From</th>
@@ -350,7 +352,7 @@
                                                 const descField = shortMode ? "shortDescription" : "description";
                                                 const descValue = shortMode ? row.shortDescription : row.description;
                                                 return (
-                                                    <tr key={row.id} className="border-b border-slate-200 transition-colors hover:bg-slate-100/50">
+                                                    <tr key={row.id} className="border-b border-slate-200 transition-colors" style={{ backgroundColor: activeRowId === row.id ? "antiquewhite" : "" }}>
                                                         <td className="p-4 align-top">
                                                             <div className="flex items-center gap-2">
                                                                 <Input
@@ -359,7 +361,7 @@
                                                                     placeholder="Designation"
                                                                     className="min-w-[120px]"
                                                                 />
-                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.designation, "Designation")} title="Copy Designation">
+                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.designation, "Designation", row.id)} title="Copy Designation">
                                                                     <CopyIcon className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
@@ -372,7 +374,7 @@
                                                                     placeholder="Organisation"
                                                                     className="min-w-[120px]"
                                                                 />
-                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.organisation, "Organisation")} title="Copy Organisation">
+                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.organisation, "Organisation", row.id)} title="Copy Organisation">
                                                                     <CopyIcon className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
@@ -409,7 +411,7 @@
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(descValue, "Description")} title="Copy Description" className="mt-1 flex-shrink-0">
+                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(descValue, "Description", row.id)} title="Copy Description" className="mt-1 flex-shrink-0">
                                                                     <CopyIcon className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
@@ -422,7 +424,7 @@
                                                                     placeholder="Location"
                                                                     className="min-w-[120px]"
                                                                 />
-                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.location, "Location")} title="Copy Location">
+                                                                <Button variant="ghost" size="icon" onClick={() => copyToClipboard(row.location, "Location", row.id)} title="Copy Location">
                                                                     <CopyIcon className="h-4 w-4" />
                                                                 </Button>
                                                             </div>
