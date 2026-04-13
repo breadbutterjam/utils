@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --midnight: #0a1128;
+            --slate: #1c2541;
+            --silver: #6b7aa1;
+            --cream: #f7f7f2;
+            --accent: #ff6b35;
+            --success: #00d4aa;
+            --spent: #ff4757;
+            --received: #00d4aa;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: linear-gradient(135deg, var(--midnight) 0%, var(--slate) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--cream);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 480px;
+            width: 100%;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3rem;
+            color: var(--cream);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: var(--silver);
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--silver);
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--cream);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--silver);
+            opacity: 0.5;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%236b7aa1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            padding-right: 50px;
+        }
+
+        select option {
+            background: var(--slate);
+            color: var(--cream);
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .type-option {
+            flex: 1;
+            padding: 14px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--silver);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .type-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .type-option.active {
+            background: var(--spent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+        }
+
+        .type-option.active.received {
+            background: var(--received);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 36px;
+        }
+
+        button {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--silver);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--cream);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+            position: relative;
+        }
+
+        .btn-add:hover {
+            background: #ff7849;
+            box-shadow: 0 12px 32px rgba(255, 107, 53, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-add:disabled {
+            background: var(--silver);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            opacity: 0.5;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            text-align: center;
+            animation: messageSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-message.success {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            color: var(--success);
+            display: block;
+        }
+
+        .status-message.error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: var(--spent);
+            display: block;
+        }
+
+        .config-link {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+
+        .config-link a {
+            color: var(--silver);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .config-link a:hover {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-add.loading .spinner {
+            display: block;
+        }
+
+        .hdn{
+            display: none;
+        }
+
+        .btn-add.loading span {
+            display: none;
+        }
+
+        /* Modal for configuration */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 17, 40, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--slate);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2rem;
+            margin-bottom: 24px;
+            color: var(--cream);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+    </style>
+<style>
+  #authModal {
+    position: fixed;
+    inset: 0;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .auth-box {
+    background: #1e293b;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    color: white;
+  }
+
+  .auth-box input {
+    width: 100%;
+    padding: 10px;
+    margin: 12px 0;
+    border-radius: 8px;
+    border: none;
+  }
+
+  .auth-box button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #authError {
+    color: #f87171;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+</head>
+<body>
+    <!-- 🔐 FULL SCREEN AUTH MODAL -->
+    <div id="authModal">
+    <div class="auth-box">
+        <h2>Enter Access Key</h2>
+        <input type="password" id="authInput" placeholder="Enter key" />
+        <button id="authBtn">Unlock</button>
+        <p id="authError"></p>
+    </div>
+    </div>
+
+
+    <div class="container">
+        <div class="header">
+            <h1>Kharcha</h1>
+            <p>Entry Form</p>
+        </div>
+
+        <div class="card">
+            <form id="expenseForm">
+                
+                <div class="form-group">
+                    <label for="account">Select card / account</label>
+                    <select id="account" required>
+                        <option value="">Choose account...</option>
+                        <option value="HDFC">HDFC</option>
+                        <option value="SBI">SBI</option>
+                        <option value="Kotak RP">Kotak RP</option>
+                        <option value="Kotak">Kotak Debit</option>
+                        <!-- <option value="Cash">Cash</option> -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Enter amount</label>
+                    <input type="number" id="amount" step="0.01" placeholder="0.00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description (Optional)</label>
+                    <input type="text" id="description" placeholder="e.g., Groceries, Salary, etc.">
+                </div>
+
+                <div class="form-group hdn" id="typeSection">
+                    <label for="type-selector">Type</label>
+                    <div class="type-selector" id="type-selector">
+                        <button type="button" class="type-option active" data-type="Dr.">Dr.</button>
+                        <button type="button" class="type-option received" data-type="Cr.">Cr.</button>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+                    <button type="submit" class="btn-add" id="addBtn">
+                        <span>Add</span>
+                        <div class="spinner"></div>
+                    </button>
+                </div>
+            </form>
+
+            <div class="status-message" id="statusMessage"></div>
+
+            <!-- <div class="config-link">
+                <a href="#" id="configLink">Configure Google Sheets</a>
+            </div> -->
+        </div>
+    </div>
+
+    <script>
+        // Configuration storage
+        const CONFIG_KEY = 'expenseTrackerConfig';
+
+        const sheetURL = "https://script.google.com/macros/s/AKfycbzf9JL7NJTyS7xsfrbsv6p0chWBhlFyl2j_Z881uIeLGx_FJDq4wgfOuvDr8br5qKTS/exec";
+
+        // DOM Elements
+        const form = document.getElementById('expenseForm');
+        const amountInput = document.getElementById('amount');
+        const accountSelect = document.getElementById('account');
+        const descriptionInput = document.getElementById('description');
+        const typeButtons = document.querySelectorAll('.type-option');
+        const resetBtn = document.getElementById('resetBtn');
+        const addBtn = document.getElementById('addBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const configLink = document.getElementById('configLink');
+        const configModal = document.getElementById('configModal');
+        const cancelConfig = document.getElementById('cancelConfig');
+        const saveConfig = document.getElementById('saveConfig');
+        const spreadsheetIdInput = document.getElementById('spreadsheetId');
+        const apiKeyInput = document.getElementById('apiKey');
+        const spentSheetInput = document.getElementById('spentSheet');
+        const receivedSheetInput = document.getElementById('receivedSheet');
+        const typeSection = document.getElementById('typeSection');
+
+        typeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // remove active from all
+                typeButtons.forEach(b => b.classList.remove('active'));
+
+                // add active to clicked
+                btn.classList.add('active');
+
+                // update value (IMPORTANT)
+                currentType = btn.dataset.type; // "Dr." or "Cr."
+            });
+        });
+
+
+        let currentType = 'spent';
+
+        // Load saved configuration
+        function loadConfig() {
+            const config = localStorage.getItem(CONFIG_KEY);
+            if (config) {
+                const parsed = JSON.parse(config);
+                spreadsheetIdInput.value = parsed.spreadsheetId || '';
+                apiKeyInput.value = parsed.apiKey || '';
+                spentSheetInput.value = parsed.spentSheet || 'Expenses';
+                receivedSheetInput.value = parsed.receivedSheet || 'Income';
+            }
+        }
+
+        //eventlistener for accountSelect - on selecting debit show type
+        accountSelect.addEventListener('change', () => {
+            if(accountSelect.value === 'Kotak'){
+                typeSection.classList.remove('hdn');
+            } else {
+                typeSection.classList.add('hdn');
+            }
+        });
+
+        function resetForm() {
+            form.reset();
+            typeButtons.forEach(btn => btn.classList.remove('active'));
+            typeButtons[0].classList.add('active');
+            currentType = 'spent';
+            statusMessage.style.display = 'none';
+            typeSection.classList.add('hdn');
+         }
+        // Reset form
+        resetBtn.addEventListener('click', resetForm);
+
+        // Show status message
+        function showStatus(message, type) {
+            statusMessage.style.display = 'block';
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function recordKharcha(){
+            fetch(sheetURL, {
+                method: "POST",
+                body: getValueJSON()
+                })
+                .then(res => res.json())
+                .then(resetForm())
+                .then(showStatus('Expense added successfully!', 'success'))
+                .then(console.log('success'))  
+            }
+
+        function getValueJSON(){
+
+            const data = {
+                account: accountSelect.value,
+                date: new Date().toLocaleString('en-IN', { 
+                    timeZone: 'Asia/Kolkata',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }),
+                amount: parseFloat(amountInput.value),
+                description: descriptionInput.value
+            };
+
+
+            if (accountSelect.value === 'Kotak'){ //Dr. Cr. only come for debit account
+                data.debitcredit = document.querySelectorAll('.type-selector .active')[0].getAttribute("data-type"); // "Dr." or "Cr."
+            } else {
+                data.type = 'sampleType'; //data type is only for standard accounts (without Dr./Cr.) 
+            }
+
+            console.log(data);
+
+            return JSON.stringify(data);
+
+        }
+
+
+        // Form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            recordKharcha();
+        });
+
+
+        const modal = document.getElementById("authModal");
+  const input = document.getElementById("authInput");
+  const btn = document.getElementById("authBtn");
+  const errorText = document.getElementById("authError");
+
+  // 🚀 If already authenticated, skip modal
+  if (localStorage.getItem("auth") === "true") {
+    modal.classList.add("hidden");
+  }
+
+  btn.addEventListener("click", authenticate);
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") authenticate();
+  });
+
+  async function authenticate() {
+    const key = input.value.trim();
+    if (!key) return;
+
+    btn.innerText = "Checking...";
+    errorText.innerText = "";
+
+    try {
+      const res = await fetch(
+        `${sheetURL}?action=auth&key=${encodeURIComponent(key)}`
+      );
+      const data = await res.json();
+
+      if (data.status === "success") {
+        localStorage.setItem("auth", "true");
+        modal.classList.add("hidden");
+      } else {
+        errorText.innerText = "Invalid key";
+      }
+    } catch (err) {
+      errorText.innerText = "Something went wrong";
+    }
+
+    btn.innerText = "Unlock";
+  }
+       
+    </script>
+</body>
+</html>
+
+
+<!-- 
+FOR Standard Accounts - Credit Card (without type)
+fetch("https://script.google.com/macros/s/AKfycbzf9JL7NJTyS7xsfrbsv6p0chWBhlFyl2j_Z881uIeLGx_FJDq4wgfOuvDr8br5qKTS/exec", {
+  method: "POST",
+  body: JSON.stringify({
+    account: "CCard1",
+    date: "11-Apr-2026",
+    amount: 127,
+    description: "adding one twenty seven rupee"
+  })
+})
+.then(res => res.json())
+.then(console.log);
+
+
+FOR DEBIT CARD (with type)
+fetch("https://script.google.com/macros/s/AKfycbzf9JL7NJTyS7xsfrbsv6p0chWBhlFyl2j_Z881uIeLGx_FJDq4wgfOuvDr8br5qKTS/exec", {
+  method: "POST",
+  body: JSON.stringify({
+    account: "Debit",
+    debitcredit: "Cr.",  
+    date: "11-Apr-2026",
+    amount: 1,
+    description: "adding one rupee"
+  })
+})
+.then(res => res.json())
+.then(console.log);
+
+-->
