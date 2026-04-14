@@ -57,7 +57,22 @@
             z-index: 2;
             max-width: 480px;
             width: 100%;
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            /* animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); */
+        }
+
+        .summaryLink {
+            /* animation: fadeIn 0.8s ease-out 0.5s backwards; */
+            display:block; 
+            text-align:center; 
+            margin-top:20px; 
+            color:var(--silver); 
+            margin-bottom: 20px;
+        }
+
+        .entryValue {
+            width: 70%;
+            text-align: right;
+            color: #9f9f9f;
         }
 
         @keyframes slideUp {
@@ -73,8 +88,8 @@
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            animation: fadeIn 0.8s ease-out 0.2s backwards;
+            /* margin-bottom: 40px; */
+            /* animation: fadeIn 0.8s ease-out 0.2s backwards; */
         }
 
         @keyframes fadeIn {
@@ -110,7 +125,7 @@
             box-shadow: 
                 0 20px 60px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+            /* animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards; */
         }
 
         @keyframes cardAppear {
@@ -509,12 +524,15 @@
     justify-content: space-between;
     margin: 8px 0;
     font-size: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #3f3f3f;
+    padding-bottom: 4px;
   }
 
   .row.total {
     margin-top: 12px;
     font-weight: bold;
-    border-top: 1px solid #334155;
+    /* border-top: 1px solid #334155; */
     padding-top: 8px;
   }
 
@@ -549,12 +567,12 @@
     <div class="summary-box">
         <h2>Summary</h2>
 
-        <div class="row"><span>Debit account balance:</span><b id="debitBalance">-</b></div>
-        <div class="row"><span>Card 1:</span><b id="card1">-</b></div>
-        <div class="row"><span>Card 2:</span><b id="card2">-</b></div>
-        <div class="row"><span>Card 3:</span><b id="card3">-</b></div>
-        <div class="row total"><span>All credit card total:</span><b id="totalCards">-</b></div>
-        <div class="row total"><span>Total fixed outgoing:</span><b id="fixedOutgoing">-</b></div>
+        <div class="row"><span class="entryValue">Debit account balance:</span><span id="debitBalance">-</span></div>
+        <div class="row"><span class="entryValue">Card 1:</span><span id="card1">-</span></div>
+        <div class="row"><span class="entryValue">Card 2:</span><span id="card2">-</span></div>
+        <div class="row"><span class="entryValue">Card 3:</span><span id="card3">-</span></div>
+        <div class="row total"><span class="entryValue">All credit card total:</span><span id="totalCards">-</span></div>
+        <div class="row total"><span class="entryValue">Total fixed outgoing:</span><span id="fixedOutgoing">-</span></div>
 
         <button onclick="closeSummary()">Close</button>
     </div>
@@ -565,9 +583,9 @@
     <div class="container">
         <div class="header">
             <h1>Kharcha</h1>
-            <p>Entry Form</p>
+            <!-- <p>Entry Form</p> -->
         </div>
-
+        <a href="#" class="summaryLink" onclick="openSummary()">View Summary</a>
         <div class="card">
             <form id="expenseForm">
                 
@@ -619,7 +637,7 @@
         </div>
 
         <!-- Button to open -->
-         <a href="#" style="display:block; text-align:center; margin-top:20px; color:var(--silver);" onclick="openSummary()">View Summary</a>
+         
         <!-- <button onclick="openSummary()">View Summary</button> -->
 
     </div>
