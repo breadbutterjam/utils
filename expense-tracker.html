@@ -26,7 +26,8 @@
         }
 
         body {
-            font-family: 'IBM Plex Mono', monospace;
+            /* font-family: 'IBM Plex Mono', monospace; */
+            font-family: sans-serif;
             background: linear-gradient(135deg, var(--midnight) 0%, var(--slate) 100%);
             min-height: 100vh;
             display: flex;
@@ -478,6 +479,57 @@
   .hidden {
     display: none !important;
   }
+
+    #summaryModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+
+  .summary-box {
+    background: #1e293b;
+    color: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 360px;
+  }
+
+  .summary-box h2 {
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 14px;
+  }
+
+  .row.total {
+    margin-top: 12px;
+    font-weight: bold;
+    border-top: 1px solid #334155;
+    padding-top: 8px;
+  }
+
+  .summary-box button {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #38bdf8;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+
 </style>
 
 </head>
@@ -492,6 +544,23 @@
     </div>
     </div>
 
+    <!-- 📊 SUMMARY MODAL -->
+    <div id="summaryModal" class="hidden">
+    <div class="summary-box">
+        <h2>Summary</h2>
+
+        <div class="row"><span>Debit account balance:</span><b id="debitBalance">-</b></div>
+        <div class="row"><span>Card 1:</span><b id="card1">-</b></div>
+        <div class="row"><span>Card 2:</span><b id="card2">-</b></div>
+        <div class="row"><span>Card 3:</span><b id="card3">-</b></div>
+        <div class="row total"><span>All credit card total:</span><b id="totalCards">-</b></div>
+        <div class="row total"><span>Total fixed outgoing:</span><b id="fixedOutgoing">-</b></div>
+
+        <button onclick="closeSummary()">Close</button>
+    </div>
+    </div>
+
+    
 
     <div class="container">
         <div class="header">
@@ -548,6 +617,11 @@
                 <a href="#" id="configLink">Configure Google Sheets</a>
             </div> -->
         </div>
+
+        <!-- Button to open -->
+         <a href="#" style="display:block; text-align:center; margin-top:20px; color:var(--silver);" onclick="openSummary()">View Summary</a>
+        <!-- <button onclick="openSummary()">View Summary</button> -->
+
     </div>
 
     <script>
@@ -723,8 +797,40 @@
 
     btn.innerText = "Unlock";
   }
-       
-    </script>
+    
+    
+
+  // Summary Modal Logic
+  async function openSummary() {
+    document.getElementById("summaryModal").classList.remove("hidden");
+
+    try {
+      const res = await fetch(`${sheetURL}?action=getSummary`);
+      const data = await res.json();
+
+      // Map values (match your Apps Script response keys)
+      document.getElementById("debitBalance").innerText = formatINR(data.debitBalance) ?? "-";
+      document.getElementById("card1").innerText = formatINR(data.card1) ?? "-";
+      document.getElementById("card2").innerText = formatINR(data.card2) ?? "-";
+      document.getElementById("card3").innerText = formatINR(data.card3) ?? "-";
+      document.getElementById("totalCards").innerText = formatINR(data.totalCards) ?? "-";
+      document.getElementById("fixedOutgoing").innerText = formatINR(data.fixedOutgoing) ?? "-";
+      console.log(data);  
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load summary");
+    }
+  }
+
+  function closeSummary() {
+    document.getElementById("summaryModal").classList.add("hidden");
+  }
+  
+    function formatINR(num) {
+    return "₹" + Number(num).toLocaleString("en-IN");
+    }  
+
+</script>
 </body>
 </html>
 
