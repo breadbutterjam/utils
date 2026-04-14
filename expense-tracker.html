@@ -758,7 +758,7 @@
             if (accountSelect.value === 'Kotak'){ //Dr. Cr. only come for debit account
                 data.debitcredit = document.querySelectorAll('.type-selector .active')[0].getAttribute("data-type"); // "Dr." or "Cr."
             } else {
-                data.type = 'sampleType'; //data type is only for standard accounts (without Dr./Cr.) 
+                data.type = ''; //data type is only for standard accounts (without Dr./Cr.) 
             }
 
             console.log(data);
