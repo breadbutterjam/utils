@@ -155,6 +155,7 @@
 
         input[type="number"],
         input[type="text"],
+        input[type="date"],
         select {
             width: 100%;
             padding: 16px 20px;
@@ -551,7 +552,7 @@
 </style>
 
 </head>
-<body>
+<body onload="bodyLoaded();">
     <!-- 🔐 FULL SCREEN AUTH MODAL -->
     <div id="authModal">
     <div class="auth-box">
@@ -612,6 +613,11 @@
                     <input type="text" id="description" placeholder="e.g., Groceries, Salary, etc.">
                 </div>
 
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
+
                 <div class="form-group hdn" id="typeSection">
                     <label for="type-selector">Type</label>
                     <div class="type-selector" id="type-selector">
@@ -643,6 +649,14 @@
     </div>
 
     <script>
+
+        function bodyLoaded() {
+            // loadConfig();
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+
         // Configuration storage
         const CONFIG_KEY = 'expenseTrackerConfig';
 
@@ -711,6 +725,9 @@
             currentType = 'spent';
             statusMessage.style.display = 'none';
             typeSection.classList.add('hdn');
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
          }
         // Reset form
         resetBtn.addEventListener('click', resetForm);
@@ -741,7 +758,7 @@
 
             const data = {
                 account: accountSelect.value,
-                date: new Date().toLocaleString('en-IN', { 
+                /*date: new Date().toLocaleString('en-IN', { 
                     timeZone: 'Asia/Kolkata',
                     year: 'numeric',
                     month: '2-digit',
@@ -749,7 +766,9 @@
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit'
-                }),
+                }),*/
+                // date: new Date(document.getElementById('date').value),
+                date: document.getElementById('date').value, //sending date as string and will convert to date in apps script
                 amount: parseFloat(amountInput.value),
                 description: descriptionInput.value
             };
