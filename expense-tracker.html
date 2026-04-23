@@ -548,11 +548,116 @@
     cursor: pointer;
   }
 
+  .headerLinks{
+    display: flex;
+    justify-content: space-around;
+  }
 
+  .account-block {
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #334155;
+  }
+
+  .account-block:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .account-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #38bdf8;
+    display: none;
+  }
+
+  .transaction-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #3f3f3f;
+    font-size: 13px;
+  }
+
+  .transaction-item:last-child {
+    border-bottom: none;
+  }
+
+  .transaction-topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .transaction-date {
+    color: #cbd5e1;
+  }
+
+  .transaction-amount {
+    font-weight: bold;
+  }
+
+  .transaction-meta {
+    color: #94a3b8;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    color: #94a3b8;
+    text-align: center;
+    padding: 12px 0;
+  }
+
+  .account-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .account-tab {
+    border: 1px solid #475569;
+    background: transparent;
+    color: #222;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .account-tab.active {
+    background: #9fff6f;
+    border-color: #9fff6f;
+    color: #0f172a;
+  }
+
+
+  #last5Modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
 </style>
 
 </head>
 <body onload="bodyLoaded();">
+    <!-- Last 5 transactions -->
+    <div id="last5Modal" class="hidden">
+        <div class="summary-box">
+            <h2>Last 5 Transactions</h2>
+            <div id="last5Tabs" class="account-tabs"></div>
+            <div id="last5List">
+                <!-- Transactions will be populated here -->
+            </div>
+            <button onclick="closeLast5()">Close</button>
+        </div>
+    </div>
+
     <!-- 🔐 FULL SCREEN AUTH MODAL -->
     <div id="authModal">
     <div class="auth-box">
@@ -586,7 +691,11 @@
             <h1>Kharcha</h1>
             <!-- <p>Entry Form</p> -->
         </div>
-        <a href="#" class="summaryLink" onclick="openSummary()">View Summary</a>
+        <div class="headerLinks">
+            <a href="#" class="summaryLink" onclick="openSummary()">View Summary</a>
+            <a href="#" class="summaryLink" onclick="showLast5()">View Last 5</a>
+        </div>
+        
         <div class="card">
             <form id="expenseForm">
                 
@@ -649,6 +758,125 @@
     </div>
 
     <script>
+        let lastFiveData = {};
+        let activeLastFiveAccount = '';
+
+        function formatTransactionDate(dateValue) {
+            if (!dateValue) {
+                return '-';
+            }
+
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) {
+                return dateValue;
+            }
+
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function renderTransactionItem(transaction, accountName) {
+            const isKotak = accountName === 'Kotak';
+            const date = formatTransactionDate(isKotak ? transaction?.[2] : transaction?.[1]);
+            const amount = isKotak ? transaction?.[3] : transaction?.[2];
+            const balance = isKotak ? transaction?.[4] : transaction?.[0];
+            const category = isKotak ? transaction?.[1] : transaction?.[3];
+            const description = isKotak ? transaction?.[5] : transaction?.[4];
+            const formattedAmount = amount !== '' && amount !== undefined ? formatINR(amount) : '-';
+            const metaText = [category, description].filter(Boolean).join(' | ') || 'No description';
+            const balanceText = balance !== '' && balance !== undefined
+                ? `Balance: ${formatINR(balance)}`
+                : '';
+
+            return `
+                <div class="transaction-item">
+                    <div class="transaction-topline">
+                        <span class="transaction-date">${date}</span>
+                        <span class="transaction-amount">${formattedAmount}</span>
+                    </div>
+                    <div class="transaction-meta">${metaText}</div>
+                    ${balanceText ? `<div class="transaction-meta">${balanceText}</div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderLastFiveTabs(data) {
+            const tabsContainer = document.getElementById("last5Tabs");
+            const accountNames = Object.keys(data || {});
+
+            if (!accountNames.length) {
+                tabsContainer.innerHTML = '';
+                return;
+            }
+
+            tabsContainer.innerHTML = accountNames.map(accountName => `
+                <button
+                    type="button"
+                    class="account-tab ${accountName === activeLastFiveAccount ? 'active' : ''}"
+                    onclick="selectLastFiveAccount('${accountName.replace(/'/g, "\\'")}')"
+                >
+                    ${accountName}
+                </button>
+            `).join('');
+        }
+
+        function renderLastFiveList() {
+            const last5List = document.getElementById("last5List");
+            const transactions = Array.isArray(lastFiveData[activeLastFiveAccount])
+                ? lastFiveData[activeLastFiveAccount].slice(0, 5)
+                : [];
+
+            if (!activeLastFiveAccount) {
+                last5List.innerHTML = '<div class="empty-state">No recent transactions found.</div>';
+                return;
+            }
+
+            last5List.innerHTML = `
+                <div class="account-block">
+                    <div class="account-title">${activeLastFiveAccount}</div>
+                    ${transactions.length
+                        ? transactions.map(transaction => renderTransactionItem(transaction, activeLastFiveAccount)).join('')
+                        : '<div class="empty-state">No transactions available.</div>'}
+                </div>
+            `;
+        }
+
+        function selectLastFiveAccount(accountName) {
+            activeLastFiveAccount = accountName;
+            renderLastFiveTabs(lastFiveData);
+            renderLastFiveList();
+        }
+
+        async function showLast5() {
+            document.getElementById("last5Modal").classList.remove("hidden");
+            const last5Tabs = document.getElementById("last5Tabs");
+            const last5List = document.getElementById("last5List");
+            last5Tabs.innerHTML = '';
+            last5List.innerHTML = '<div class="empty-state">Loading recent transactions...</div>';
+
+            try {
+                const res = await fetch(`${sheetURL}?action=getLastFive`);
+                const data = await res.json();
+                lastFiveData = data || {};
+                activeLastFiveAccount = Object.keys(lastFiveData)[0] || '';
+                renderLastFiveTabs(lastFiveData);
+                renderLastFiveList();
+                console.log(data);
+            } catch (err) {
+                console.error(err);
+                lastFiveData = {};
+                activeLastFiveAccount = '';
+                last5Tabs.innerHTML = '';
+                last5List.innerHTML = '<div class="empty-state">Failed to load recent transactions.</div>';
+            }
+        }
+
+        function closeLast5() {
+            document.getElementById("last5Modal").classList.add("hidden");
+        }
 
         function bodyLoaded() {
             // loadConfig();
