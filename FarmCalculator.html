@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trench Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .section {
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+    }
+    input, button, select {
+      width: 100%;
+      padding: 10px;
+      /* margin-top: 10px; */
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    .result {
+      margin-top: 15px;
+      line-height: 1.7;
+      background-color: #ffff46;
+    }
+    h2, h3{
+        margin-block-start: 0px;
+        margin-block-end: 0px;
+    }
+
+    .disabledSection{
+      opacity: 0.2;
+    }
+
+    .flx{
+      display: flex;
+    }
+
+    .flx-col{
+      flex-direction: column;
+    }
+
+    .inpNum{
+      width: 20%;
+    }
+  </style>
+</head>
+<body onload="bodyLoaded();">
+
+<div class="container">
+  <h2>Trench Calculator</h2>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <h3>Section 1: Circle</h3>
+    
+    <div class="flx flx-col">
+      <div class="flx flx-col">
+        <label for="diameter">Diameter (meters):</label>
+        <input type="number" class="inpNum" id="diameter">
+      </div>
+      
+      <div>
+        <button onclick="calculateCircle()">Calculate Arc</button>
+      </div>
+
+    </div>
+    
+
+
+    <div class="result" id="circleResult"></div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section disabledSection">
+    <h3>Section 2: Trench Volume</h3>
+
+    <div>
+      <label>Mode:</label>
+      <select id="mode">
+        <option value="arc">Arc (160°)</option>
+        <option value="full">Full Circle</option>
+      </select>
+    </div>
+    
+    <div class="TrenchWidthDepth">
+      <div class="flx flx-col">
+      <label>Trench Width (m):</label>
+      <input class="inpNum" type="number" id="width">
+    </div>
+
+    <div class="flx flx-col">
+      <label>Trench Depth (m):</label>
+      <input class="inpNum" type="number" id="depth">
+    </div>
+
+    </div>
+    
+    
+    <div>
+      <button onclick="calculateTrench()">Calculate Trench Volume</button>
+    </div>
+
+    <div class="result" id="trenchResult"></div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section disabledSection">
+    <h3>Section 3: Material Mix</h3>
+
+    <label>% Soil:</label>
+    <input type="number" class="inpNum" id="soil">
+
+    <label>% Soil Additive:</label>
+    <input type="number" class="inpNum" id="soilAdd">
+
+    <label>% Drainage/Aeration Additive:</label>
+    <input type="number" class="inpNum" id="drain">
+
+    <button onclick="calculateMix()">Calculate Mix Volumes</button>
+
+    <div class="result" id="mixResult"></div>
+  </div>
+</div>
+
+<script>
+let storedCircumference = 0;
+let storedArcLength = 0;
+let storedVolume = 0;
+
+function enableNextSection(){
+  document.querySelectorAll('.disabledSection')[0].classList.remove('disabledSection');
+}
+
+// SECTION 1
+function calculateCircle() {
+  enableNextSection();
+  const d = parseFloat(document.getElementById('diameter').value);
+  if (!d || d <= 0) {
+    document.getElementById('circleResult').innerHTML = "Enter valid diameter.";
+    return;
+  }
+
+  const r = d / 2;
+  const c = Math.PI * d;
+  const angle = 160;
+
+  const arc = (angle / 360) * c;
+  const area = (angle / 360) * Math.PI * r * r;
+
+  storedCircumference = c;
+  storedArcLength = arc;
+
+  document.getElementById('circleResult').innerHTML = `
+    Radius: ${r.toFixed(2)} m<br>
+    Circumference: ${c.toFixed(2)} m<br>
+    Arc Length: ${arc.toFixed(2)} m<br>
+    Sector Area: ${area.toFixed(2)} m²
+  `;
+}
+
+// SECTION 2
+function calculateTrench() {
+  enableNextSection();
+  const w = parseFloat(document.getElementById('width').value);
+  const d = parseFloat(document.getElementById('depth').value);
+  const mode = document.getElementById('mode').value;
+
+  if (!storedCircumference) {
+    document.getElementById('trenchResult').innerHTML = "Calculate circle first.";
+    return;
+  }
+
+  if (!w || w <= 0 || !d || d <= 0) {
+    document.getElementById('trenchResult').innerHTML = "Enter valid width & depth.";
+    return;
+  }
+
+  let length = mode === "full" ? storedCircumference : storedArcLength;
+
+  const vol = length * w * d;
+
+  storedVolume = vol;
+
+  document.getElementById('trenchResult').innerHTML = `
+    Length Used: ${length.toFixed(2)} m<br>
+    Volume: ${vol.toFixed(2)} m³<br>
+    ${ (vol * 1000).toFixed(0) } liters<br>
+    ${ (vol * 35.3147).toFixed(2) } ft³
+  `;
+}
+
+// SECTION 3
+function calculateMix() {
+  const soil = parseFloat(document.getElementById('soil').value) || 0;
+  const soilAdd = parseFloat(document.getElementById('soilAdd').value) || 0;
+  const drain = parseFloat(document.getElementById('drain').value) || 0;
+
+  const total = soil + soilAdd + drain;
+
+  if (!storedVolume) {
+    document.getElementById('mixResult').innerHTML = "Calculate trench volume first.";
+    return;
+  }
+
+  if (total !== 100) {
+    document.getElementById('mixResult').innerHTML = "Percentages must total 100%.";
+    return;
+  }
+
+  function calcPart(percent) {
+    const m3 = (percent / 100) * storedVolume;
+    return {
+      m3: m3,
+      liters: m3 * 1000,
+      ft3: m3 * 35.3147
+    };
+  }
+
+  const soilVol = calcPart(soil);
+  const soilAddVol = calcPart(soilAdd);
+  const drainVol = calcPart(drain);
+
+  document.getElementById('mixResult').innerHTML = `
+    <strong>Material Volumes:</strong><br><br>
+
+    Soil:<br>
+    ${soilVol.m3.toFixed(2)} m³ | ${soilVol.liters.toFixed(0)} L | ${soilVol.ft3.toFixed(2)} ft³<br><br>
+
+    Soil Additive:<br>
+    ${soilAddVol.m3.toFixed(2)} m³ | ${soilAddVol.liters.toFixed(0)} L | ${soilAddVol.ft3.toFixed(2)} ft³<br><br>
+
+    Drainage/Aeration:<br>
+    ${drainVol.m3.toFixed(2)} m³ | ${drainVol.liters.toFixed(0)} L | ${drainVol.ft3.toFixed(2)} ft³
+  `;
+}
+
+function bodyLoaded(){
+  document.getElementById("diameter").focus();
+}
+
+</script>
+
+</body>
+</html>
