@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f2ed;
+      --surface: #ffffff;
+      --border: #e0dbd2;
+      --text-primary: #1a1714;
+      --text-secondary: #6b6560;
+      --accent: #2d6a4f;
+      --accent-light: #d8ead3;
+      --link: #2a4d8f;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0 0 3rem;
+    }
+
+    header {
+      padding: 3rem 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    header .eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text-primary);
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    .project-list {
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    padding-left: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-light);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+
+    .card:active::after { opacity: 0.35; }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+    }
+
+    .card-thumb {
+      display: none;
+      width: 62px;
+      height: 62px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--accent-light);
+      /* display: flex; */
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      overflow: hidden;
+    }
+
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--link);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      margin-bottom: 0.3rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-arrow {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      align-self: center;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    .card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(3px);
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 0 1.25rem;
+      margin-top: 2rem;
+      margin-bottom: 0.6rem;
+    }
+
+    /* Staggered entrance animation */
+    .card {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp 0.4s ease forwards;
+    }
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.12s; }
+    .card:nth-child(3) { animation-delay: 0.19s; }
+    .card:nth-child(4) { animation-delay: 0.26s; }
+    .card:nth-child(5) { animation-delay: 0.33s; }
+    .card:nth-child(6) { animation-delay: 0.40s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Desktop: 3-column grid */
+    @media (min-width: 640px) {
+      body { max-width: 960px; margin: 0 auto; }
+      header { padding: 3.5rem 2.5rem 2rem; }
+      header h1 { font-size: 2.5rem; }
+      .section-label { padding: 0 2.5rem; }
+      .project-list {
+        padding: 1.5rem 2.5rem;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+      }
+      .card { flex-direction: column; padding: 1.25rem; }
+      .card-thumb { width: 100%; height: 120px; border-radius: 8px; margin-bottom: 0.25rem; }
+      .card-arrow { display: none; }
+      .card-title { white-space: normal; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body onload="addCards();">
+
+  <header>
+    <!-- <div class="eyebrow">Portfolio</div> -->
+    <h1>Index</h1>
+    <!-- <p>A collection of things I've been building.</p> -->
+  </header>
+
+  <!-- <div class="section-label">All Projects</div> -->
+
+  <div class="project-list">
+
+    <!-- <a class="card" href="#">
+      <div class="card-thumb">🌍</div>
+      <div class="card-body">
+        <div class="card-title">Index</div>
+        <div class="card-desc">Self reference page</div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
+
+    <a class="card" target="_blank" href="https://breadbutterjam.github.io/statesandcapitals/">
+      <div class="card-thumb">🗺️</div>
+      <div class="card-body">
+        <div class="card-title">States of India</div>
+        <div class="card-desc"></div>
+      </div>
+      <span class="card-arrow">›</span>
+    </a>
+
+    <a class="card" href="https://breadbutterjam.github.io/timepusdi/Asia.html">
+      <div class="card-thumb">🌏</div>
+      <div class="card-body">
+        <div class="card-title">Asia</div>
+        <div class="card-desc">Flags of Asia</div>
+      </div>
+      <span class="card-arrow"></span>
+    </a> -->
+
+  </div>
+<script>
+  const data = [
+    { title: 'Index', desc: 'Self reference page', link: '#' },
+    { title: 'States of India', desc: '', link: 'https://breadbutterjam.github.io/statesandcapitals/' },
+    { title: 'Asia', desc: 'Flags of Asia', link: 'https://breadbutterjam.github.io/timepusdi/Asia.html' },
+    { title: 'Gujarati Calendar', desc: 'todays tithi based on Gujarati calendar', link: 'https://breadbutterjam.github.io/timepusdi/Gujarati-calendar.html' },
+    { title: 'Tides', desc: 'Track tide - going or coming - WIP', link: '#' },
+    { title: 'VFL', desc: 'custom fantasy league', link: 'https://vfl.onrender.com/fantasy/login.php' },
+    { title: 'Super 11 Rules', desc: 'Rules - vanilla and custom for Super 11', link: 'https://breadbutterjam.github.io/cards/card_game_rules/card-game-rules.html' },
+    { title: 'Phase 10 - Super 11 Scorer', desc: 'Online scorer for Phase10 and Super11', link: 'https://breadbutterjam.github.io/cards/card_game_rules/card-game-scorer.html' },
+    { title: 'Portfolio / Digital Homepage', desc: 'Digital Homepage', link: 'https://breadbutterjam.github.io/portfolio/JaimeenBulsara.html' },
+    { title: 'Carousel', desc: 'Image carousel - pre-fed Guj months', link: 'https://breadbutterjam.github.io/carousel/' },
+    { title: 'Timepusdi Index', desc: 'Index for Timepusdi', link: 'https://breadbutterjam.github.io/timepusdi/' },
+    { title: 'Music player', desc: 'Music Player for YT and other songs', link: 'https://breadbutterjam.github.io/timepusdi/music/index.html' },
+  ];
+
+  function addCards(){
+     const container = document.querySelector('.project-list'); 
+     data.forEach(item => {
+       const card = createCard(item);
+       container.appendChild(card);
+     });
+  }
+
+
+  function createCard(data){
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.href = data.link;
+    a.target = '_blank';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'card-thumb';
+    thumb.textContent = '';
+
+    const body = document.createElement('div');
+    body.className = 'card-body';
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = data.title;
+    const desc = document.createElement('div');
+    desc.className = 'card-desc';
+    desc.textContent = data.desc;
+    body.appendChild(title);
+    body.appendChild(desc);
+    a.appendChild(thumb);
+    a.appendChild(body);
+    return a;
+  }
+  
+  /*
+      <a class="card" href="https://breadbutterjam.github.io/timepusdi/Asia.html">
+        <div class="card-thumb">🌏</div>
+        <div class="card-body">
+          <div class="card-title">Asia</div>
+          <div class="card-desc">Flags of Asia</div>
+        </div>
+        <span class="card-arrow"></span>
+      </a>
+  */
+</script>  
+</body>
+</html>
