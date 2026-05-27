@@ -19,7 +19,8 @@
             --slate: #1c2541;
             --silver: #6b7aa1;
             --cream: #f7f7f2;
-            --accent: #ff6b35;
+            /* --accent: #ff6b35; #46c9ca */
+            --accent: #46c9ca; 
             --success: #00d4aa;
             --spent: #ff4757;
             --received: #00d4aa;
@@ -445,6 +446,15 @@
             gap: 12px;
             margin-top: 24px;
         }
+
+        #showHideFixedExp{
+          /* background: rgba(255, 255, 255, 0.05); */
+          font-family: 'IBM Plex Mono', monospace;
+          position: absolute;
+          left: 14px;
+          font-weight: normal;
+          cursor: pointer;
+        }
     </style>
 <style>
   #authModal {
@@ -657,14 +667,14 @@
 
   .dashboard-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 12px;
   }
 
   .dashboard-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 4px;
     padding: 0 10px;
   }
 
@@ -693,16 +703,20 @@
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
-    padding: 30px;
+    /* padding: 30px; */
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 12px;
+    padding-bottom: 12px;
     box-shadow: 
       0 20px 60px rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .dashboard-section {
-    margin-bottom: 24px;
+    /* margin-bottom: 24px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); */
   }
 
   .dashboard-section:last-child {
@@ -725,6 +739,7 @@
     align-items: center;
     padding: 10px 0;
     font-size: 0.95rem;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.05)
   }
 
   .dashboard-label {
@@ -776,8 +791,6 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    position: absolute;
-    left: 10px;
   }
 
   .status-icon svg {
@@ -807,9 +820,9 @@
   .dashboard-total {
     font-weight: 600;
     font-size: 1.05rem;
-    margin-top: 8px;
+    /* margin-top: 8px; */
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1); */
   }
 
   .dashboard-total .dashboard-label {
@@ -824,9 +837,9 @@
   .dashboard-grand-total {
     font-size: 1.1rem;
     font-weight: 700;
-    margin-top: 16px;
+    /* margin-top: 16px;
     padding-top: 16px;
-    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid rgba(255, 255, 255, 0.1); */
   }
 
   .dashboard-grand-total .dashboard-value {
@@ -928,123 +941,29 @@
             <div class="dashboard-content">
                 <!-- Credit Cards Section -->
                 <div class="dashboard-section">
-                    <div class="dashboard-row">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-pending">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </span>
-                            HDFC
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-soon"></span>
-                            <span class="dashboard-value" id="dash-hdfc"></span>
-                        </div>
-                    </div>
-                    <div class="dashboard-row">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-paid">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </span>
-                            SBI
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-later"></span>
-                            <span class="dashboard-value" id="dash-sbi"></span>
-                        </div>
-                    </div>
-                    <div class="dashboard-row">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-pending">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </span>
-                            Kotak RP
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-soon"></span>
-                            <span class="dashboard-value" id="dash-kotak-rp"></span>
-                        </div>
-                    </div>
+                    <div id="creditCardsContainer"></div>
                     <div class="dashboard-row dashboard-total">
+                        
                         <span class="dashboard-label">Total CC</span>
-                        <span class="dashboard-value" id="dash-total-cc">Rs.69,062.10</span>
+                        <span class="dashboard-value" id="dash-total-cc"></span>
                     </div>
                 </div>
 
                 <!-- Fixed Expenses Section -->
                 <div class="dashboard-section">
                     <div class="dashboard-row dashboard-total">
-                        <span class="dashboard-label">— Total Fixed</span>
-                        <span class="dashboard-value" id="dash-total-fixed">Rs.51,850.00</span>
+                        <span id="showHideFixedExp">-</span>
+                        <span class="dashboard-label">Total Fixed</span>
+                        <span class="dashboard-value" id="dash-total-fixed"></span>
                     </div>
-                    <div class="dashboard-row" style="padding-left: 20px;">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-paid">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </span>
-                            Gaadi EMI
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-later"></span>
-                            <span class="dashboard-value" id="dash-gaadi">Rs.25,350.00</span>
-                        </div>
-                    </div>
-                    <div class="dashboard-row" style="padding-left: 20px;">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-overdue">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </span>
-                            LIC
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date overdue"></span>
-                            <span class="dashboard-value" id="dash-lic">Rs.3,000.00</span>
-                        </div>
-                    </div>
-                    <div class="dashboard-row" style="padding-left: 20px;">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-pending">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </span>
-                            SIP
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-soon"></span>
-                            <span class="dashboard-value" id="dash-sip">Rs.15,000.00</span>
-                        </div>
-                    </div>
-                    <div class="dashboard-row" style="padding-left: 20px;">
-                        <span class="dashboard-label">
-                            <span class="status-icon status-paid">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </span>
-                            Tithal
-                        </span>
-                        <div class="dashboard-right">
-                            <span class="pay-by-date due-later"></span>
-                            <span class="dashboard-value" id="dash-tithal">Rs.8,500.00</span>
-                        </div>
-                    </div>
+                    <div id="fixedExpensesContainer"></div>
                 </div>
 
                 <!-- Grand Total Section -->
                 <div class="dashboard-section">
                     <div class="dashboard-row dashboard-grand-total">
                         <span class="dashboard-label">Total Total</span>
-                        <span class="dashboard-value" id="dash-grand-total">Rs.120,912.10</span>
+                        <span class="dashboard-value" id="dash-grand-total"></span>
                     </div>
                 </div>
 
@@ -1052,7 +971,7 @@
                 <div class="dashboard-section">
                     <div class="dashboard-row dashboard-total">
                         <span class="dashboard-label">Debit</span>
-                        <span class="dashboard-value dashboard-debit" id="dash-debit">Rs.46,440.02</span>
+                        <span class="dashboard-value dashboard-debit" id="dash-debit"></span>
                     </div>
                 </div>
             </div>
@@ -1366,6 +1285,23 @@
             const dateInput = document.getElementById('date');
             const today = new Date().toISOString().split('T')[0];
             dateInput.value = today;
+
+            document.getElementById('showHideFixedExp').addEventListener('click', showHideFixedExp);
+        }
+
+        function showHideFixedExp(){
+          console.log('toggled fixed expenses');  
+          const fixedExpContainer = document.getElementById('fixedExpensesContainer');
+          const showHideBtn = document.getElementById('showHideFixedExp');
+          if (fixedExpContainer.classList.contains('hdn')) {
+            fixedExpContainer.classList.remove('hdn');
+            fixedExpContainer.style.display = 'block';
+            showHideBtn.textContent = '-';
+          } else {
+            fixedExpContainer.classList.add('hdn');
+            fixedExpContainer.style.display = 'none';
+            showHideBtn.textContent = '+';
+          }
         }
 
         // Configuration storage
@@ -1697,7 +1633,7 @@
     }
 
     // Total Outgoing (row 13, index 12)
-    const debitData = getRowData(12);
+    const debitData = getRowData(14);
     if (debitData.amount) {
       result.totals.debit = {
         amount: parseAmount(debitData.amount),
@@ -1772,33 +1708,17 @@
   function renderDashboard(dashboardData) {
     if (!dashboardData) return;
     
-    // Update credit cards
-    const cardIds = ['dash-hdfc', 'dash-sbi', 'dash-kotak-rp'];
-    dashboardData.creditCards.forEach((card, index) => {
-      if (index < cardIds.length) {
-        const valueEl = document.getElementById(cardIds[index]);
-        if (valueEl) {
-          valueEl.textContent = card.amountFormatted;
-        }
-      }
-    });
+    // Render credit cards dynamically
+    renderCreditCards(dashboardData.creditCards);
+    
+    // Render fixed expenses dynamically
+    renderFixedExpenses(dashboardData.fixedExpenses);
 
     // Update total CC
     const totalCCEl = document.getElementById('dash-total-cc');
     if (totalCCEl && dashboardData.totals.totalCC) {
       totalCCEl.textContent = dashboardData.totals.totalCC.amountFormatted;
     }
-
-    // Update fixed expenses
-    const fixedIds = ['dash-gaadi', 'dash-lic', 'dash-sip', 'dash-tithal'];
-    dashboardData.fixedExpenses.forEach((expense, index) => {
-      if (index < fixedIds.length) {
-        const valueEl = document.getElementById(fixedIds[index]);
-        if (valueEl) {
-          valueEl.textContent = expense.amountFormatted;
-        }
-      }
-    });
 
     // Update total fixed
     const totalFixedEl = document.getElementById('dash-total-fixed');
@@ -1824,33 +1744,92 @@
   }
 
   /**
+   * Render credit cards section dynamically
+   */
+  function renderCreditCards(creditCards) {
+    const container = document.getElementById('creditCardsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    creditCards.forEach((card, index) => {
+      const row = document.createElement('div');
+      row.className = 'dashboard-row';
+      row.setAttribute('data-item-type', 'credit-card');
+      row.setAttribute('data-item-index', index);
+      
+      row.innerHTML = `
+        <span class="dashboard-label">
+          <span class="status-icon status-pending">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          ${card.name}
+        </span>
+        <div class="dashboard-right">
+          <span class="pay-by-date due-soon">${card.payByDate}</span>
+          <span class="dashboard-value">${card.amountFormatted}</span>
+        </div>
+      `;
+      
+      container.appendChild(row);
+    });
+  }
+
+  /**
+   * Render fixed expenses section dynamically
+   */
+  function renderFixedExpenses(fixedExpenses) {
+    const container = document.getElementById('fixedExpensesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    fixedExpenses.forEach((expense, index) => {
+      const row = document.createElement('div');
+      row.className = 'dashboard-row';
+      row.setAttribute('data-item-type', 'fixed-expense');
+      row.setAttribute('data-item-index', index);
+      // row.style.paddingLeft = '20px';
+      
+      row.innerHTML = `
+        <span class="dashboard-label">
+          <span class="status-icon status-pending">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          ${expense.name}
+        </span>
+        <div class="dashboard-right">
+          <span class="pay-by-date due-soon">${expense.payByDate}</span>
+          <span class="dashboard-value">${expense.amountFormatted}</span>
+        </div>
+      `;
+      
+      container.appendChild(row);
+    });
+  }
+
+  /**
    * Update pay-by-date badges with actual dates
    */
   function updatePayByDateBadges(dashboardData) {
-    const payByDateElements = document.querySelectorAll('.pay-by-date');
-    
-    // Update credit cards pay-by-date (first 3 elements)
-    dashboardData.creditCards.forEach((card, idx) => {
-      if (idx < payByDateElements.length) {
-        // payByDateElements[idx].textContent = card.payByDate;
-        payByDateElements[idx].textContent = formatDateShort(card.payByDate);
+    const allItems = [
+      ...dashboardData.creditCards.map((item, idx) => ({ ...item, type: 'credit-card', index: idx })),
+      ...dashboardData.fixedExpenses.map((item, idx) => ({ ...item, type: 'fixed-expense', index: idx }))
+    ];
 
-        
-        const classToAdd = getPayByDateClass(card.payByDate);
-        payByDateElements[idx].classList.remove('due-soon', 'due-later', 'overdue');
-        payByDateElements[idx].classList.add(classToAdd);
-      }
-    });
-
-    // Update fixed expenses pay-by-date (after credit cards)
-    const fixedStartIndex = 3;
-    dashboardData.fixedExpenses.forEach((expense, idx) => {
-      const elementIndex = fixedStartIndex + idx;
-      if (elementIndex < payByDateElements.length) {
-        payByDateElements[elementIndex].textContent = expense.payByDate;
-        const classToAdd = getPayByDateClass(expense.payByDate);
-        payByDateElements[elementIndex].classList.remove('due-soon', 'due-later', 'overdue');
-        payByDateElements[elementIndex].classList.add(classToAdd);
+    allItems.forEach((item) => {
+      let selector = `[data-item-type="${item.type}"][data-item-index="${item.index}"] .pay-by-date`;
+      const payByDateEl = document.querySelector(selector);
+      
+      if (payByDateEl) {
+        payByDateEl.textContent = formatDateShort(item.payByDate);
+        const classToAdd = getPayByDateClass(item.payByDate);
+        payByDateEl.classList.remove('due-soon', 'due-later', 'overdue');
+        payByDateEl.classList.add(classToAdd);
       }
     });
   }
@@ -1860,15 +1839,15 @@
    */
   function updateStatusIcons(dashboardData) {
     const allItems = [
-      ...dashboardData.creditCards,
-      ...dashboardData.fixedExpenses
+      ...dashboardData.creditCards.map((item, idx) => ({ ...item, type: 'credit-card', index: idx })),
+      ...dashboardData.fixedExpenses.map((item, idx) => ({ ...item, type: 'fixed-expense', index: idx }))
     ];
 
-    const statusIcons = document.querySelectorAll('.status-icon');
-
-    allItems.forEach((item, idx) => {
-      if (idx < statusIcons.length) {
-        const icon = statusIcons[idx];
+    allItems.forEach((item) => {
+      let selector = `[data-item-type="${item.type}"][data-item-index="${item.index}"] .status-icon`;
+      const icon = document.querySelector(selector);
+      
+      if (icon) {
         const statusLower = item.status.toLowerCase();
         
         // Determine the actual status
@@ -2008,6 +1987,7 @@
 
     return date.toLocaleDateString("en-US", options);
     }
+
 
 </script>
 </body>
