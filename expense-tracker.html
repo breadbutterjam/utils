@@ -642,6 +642,214 @@
     justify-content: center;
     z-index: 9999;
   }
+
+  /* Dashboard Styles */
+  .dashboard-view {
+    display: none;
+  }
+
+  .dashboard-view.active {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .dashboard-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+
+  .dashboard-nav button {
+    background: none;
+    border: none;
+    color: var(--silver);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.2s;
+  }
+
+  .dashboard-nav button:hover {
+    color: var(--cream);
+  }
+
+  .dashboard-month {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--cream);
+  }
+
+  .dashboard-content {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .dashboard-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .dashboard-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .dashboard-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .dashboard-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 0.95rem;
+  }
+
+  .dashboard-label {
+    color: var(--silver);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dashboard-value {
+    color: var(--cream);
+    font-weight: 500;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .dashboard-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pay-by-date {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .pay-by-date.due-soon {
+    color: #ff9f43;
+    background: rgba(255, 159, 67, 0.1);
+  }
+
+  .pay-by-date.due-later {
+    color: var(--silver);
+    background: rgba(107, 122, 161, 0.1);
+  }
+
+  .pay-by-date.overdue {
+    color: #ee5a6f;
+    background: rgba(238, 90, 111, 0.1);
+  }
+
+  .status-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .status-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .status-paid {
+    color: var(--success);
+  }
+
+  .status-pending {
+    color: #ff9f43;
+  }
+
+  .status-overdue {
+    color: #ee5a6f;
+  }
+
+  .dashboard-total {
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .dashboard-total .dashboard-label {
+    color: var(--cream);
+  }
+
+  .dashboard-total .dashboard-value {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+
+  .dashboard-grand-total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .dashboard-grand-total .dashboard-value {
+    color: var(--accent);
+    font-size: 1.3rem;
+  }
+
+  .dashboard-debit {
+    color: var(--success) !important;
+  }
+
+  .dashboard-back-btn {
+    display: block;
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--cream);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .dashboard-back-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+  }
+
+  .form-view.hidden {
+    display: none;
+  }
 </style>
 
 </head>
@@ -693,9 +901,157 @@
         </div>
         <div class="headerLinks">
             <a href="#" class="summaryLink" onclick="openSummary()">View Summary</a>
+            <a href="#" class="summaryLink" onclick="showDashboard()">Dashboard</a>
             <a href="#" class="summaryLink" onclick="showLast5()">View Last 5</a>
         </div>
         
+        <!-- Dashboard View -->
+        <div id="dashboardView" class="dashboard-view">
+            <div class="dashboard-header">
+                <div class="dashboard-nav">
+                    <button onclick="navigateMonth(-1)">‹ Prev</button>
+                    <div class="dashboard-month" id="dashboardMonth">June 2026</div>
+                    <button onclick="navigateMonth(1)">Next ›</button>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Credit Cards Section -->
+                <div class="dashboard-section">
+                    <div class="dashboard-row">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-pending">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            HDFC
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-soon">Jun 10</span>
+                            <span class="dashboard-value" id="dash-hdfc">Rs.27,354.00</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-paid">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </span>
+                            SBI
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-later">Jun 25</span>
+                            <span class="dashboard-value" id="dash-sbi">Rs.39,567.82</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-pending">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            Kotak RP
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-soon">Jun 15</span>
+                            <span class="dashboard-value" id="dash-kotak-rp">Rs.2,140.28</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row dashboard-total">
+                        <span class="dashboard-label">Total CC</span>
+                        <span class="dashboard-value" id="dash-total-cc">Rs.69,062.10</span>
+                    </div>
+                </div>
+
+                <!-- Fixed Expenses Section -->
+                <div class="dashboard-section">
+                    <div class="dashboard-row dashboard-total">
+                        <span class="dashboard-label">— Total Fixed</span>
+                        <span class="dashboard-value" id="dash-total-fixed">Rs.51,850.00</span>
+                    </div>
+                    <div class="dashboard-row" style="padding-left: 20px;">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-paid">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </span>
+                            Gaadi EMI
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-later">Jun 28</span>
+                            <span class="dashboard-value" id="dash-gaadi">Rs.25,350.00</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row" style="padding-left: 20px;">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-overdue">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            LIC
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date overdue">Jun 5</span>
+                            <span class="dashboard-value" id="dash-lic">Rs.3,000.00</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row" style="padding-left: 20px;">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-pending">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            SIP
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-soon">Jun 12</span>
+                            <span class="dashboard-value" id="dash-sip">Rs.15,000.00</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-row" style="padding-left: 20px;">
+                        <span class="dashboard-label">
+                            <span class="status-icon status-paid">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </span>
+                            Tithal
+                        </span>
+                        <div class="dashboard-right">
+                            <span class="pay-by-date due-later">Jun 30</span>
+                            <span class="dashboard-value" id="dash-tithal">Rs.8,500.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grand Total Section -->
+                <div class="dashboard-section">
+                    <div class="dashboard-row dashboard-grand-total">
+                        <span class="dashboard-label">Total Total</span>
+                        <span class="dashboard-value" id="dash-grand-total">Rs.120,912.10</span>
+                    </div>
+                </div>
+
+                <!-- Debit Section -->
+                <div class="dashboard-section">
+                    <div class="dashboard-row dashboard-total">
+                        <span class="dashboard-label">Debit</span>
+                        <span class="dashboard-value dashboard-debit" id="dash-debit">Rs.46,440.02</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="dashboard-back-btn" onclick="hideDashboard()">Back to Form</button>
+        </div>
+
+        <!-- Form View -->
+        <div id="formView" class="form-view">
         <div class="card">
             <form id="expenseForm">
                 
@@ -750,6 +1106,8 @@
                 <a href="#" id="configLink">Configure Google Sheets</a>
             </div> -->
         </div>
+        </div>
+        <!-- End Form View -->
 
         <!-- Button to open -->
          
@@ -758,6 +1116,99 @@
     </div>
 
     <script>
+        // Dashboard state
+        let currentDashboardMonth = new Date();
+        
+        function showDashboard() {
+            document.getElementById('formView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.add('active');
+            updateDashboardMonth();
+            updatePayByDateColors();
+            // TODO: Fetch dashboard data here
+
+            
+        }
+
+        let dashboardDataCache;
+
+        async function getDashboardData() {
+            try {
+                const res = await fetch(`${sheetURL}?action=getMonthlySummary`);
+                const data = await res.json();
+                // console.log(data);
+                dashboardDataCache = data; // Cache the data for later use
+                
+            } catch (err) {
+                console.error(err);
+            }
+
+        }
+
+        function renderDashboardData() {
+            const month = document.getElementById('dashboardMonth').textContent;
+
+        }
+
+        function hideDashboard() {
+            document.getElementById('dashboardView').classList.remove('active');
+            document.getElementById('formView').classList.remove('hidden');
+        }
+
+        function navigateMonth(direction) {
+            currentDashboardMonth.setMonth(currentDashboardMonth.getMonth() + direction);
+            updateDashboardMonth();
+            updatePayByDateColors();
+            // TODO: Fetch new month data here
+        }
+
+        function updateDashboardMonth() {
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            const monthText = monthNames[currentDashboardMonth.getMonth()] + ' ' + currentDashboardMonth.getFullYear();
+            document.getElementById('dashboardMonth').textContent = monthText;
+            
+        }
+
+        // Function to determine pay-by-date color based on days until due
+        function getPayByDateClass(dateString) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Parse the date string (format: "Jun 10")
+            const [monthStr, dayStr] = dateString.split(' ');
+            const dueDate = new Date(currentDashboardMonth.getFullYear(), getMonthIndex(monthStr), parseInt(dayStr));
+            
+            const daysUntilDue = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilDue < 0) {
+                return 'overdue';
+            } else if (daysUntilDue <= 7) {
+                return 'due-soon';
+            } else {
+                return 'due-later';
+            }
+        }
+
+        // Helper function to get month index from month name
+        function getMonthIndex(monthStr) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months.indexOf(monthStr);
+        }
+
+        // Function to update all pay-by-date colors when dashboard is shown or month changes
+        function updatePayByDateColors() {
+            const payByDateElements = document.querySelectorAll('.pay-by-date');
+            payByDateElements.forEach(element => {
+                const dateText = element.textContent.trim();
+                const classToAdd = getPayByDateClass(dateText);
+                
+                // Remove all possible classes
+                element.classList.remove('due-soon', 'due-later', 'overdue');
+                // Add the appropriate class
+                element.classList.add(classToAdd);
+            });
+        }
+
         let lastFiveData = {};
         let activeLastFiveAccount = '';
 
@@ -887,7 +1338,6 @@
 
         // Configuration storage
         const CONFIG_KEY = 'expenseTrackerConfig';
-
         const sheetURL = "https://script.google.com/macros/s/AKfycbzf9JL7NJTyS7xsfrbsv6p0chWBhlFyl2j_Z881uIeLGx_FJDq4wgfOuvDr8br5qKTS/exec";
 
         // DOM Elements
