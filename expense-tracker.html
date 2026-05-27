@@ -775,6 +775,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    position: absolute;
+    left: 10px;
   }
 
   .status-icon svg {
@@ -782,16 +785,23 @@
     height: 100%;
   }
 
-  .status-paid {
+  /* Paid status - green checkmark */
+  .status-icon.status-paid {
     color: var(--success);
   }
 
-  .status-pending {
-    color: #ff9f43;
+  /* Warning - yellow for due-soon, red for overdue */
+  .status-icon.status-due-soon {
+    color: #ffb366;
   }
 
-  .status-overdue {
+  .status-icon.status-overdue {
     color: #ee5a6f;
+  }
+
+  /* Pending - no icon shown */
+  .status-icon.status-pending {
+    display: none;
   }
 
   .dashboard-total {
@@ -1117,13 +1127,35 @@
 
     <script>
         // Dashboard state
-        let currentDashboardMonth = new Date();
+        // let currentDashboardMonth = new Date();
+        let currentDashboardMonth;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         
+        let dashboardCache;
+
         function showDashboard() {
+            currentDashboardMonth = new Date(); // Reset to current month when opening dashboard
             document.getElementById('formView').classList.add('hidden');
             document.getElementById('dashboardView').classList.add('active');
             updateDashboardMonth();
             loadDashboardData();
+            
+        }
+
+        function renderDashboardFor(dateObj) {
+          // Calculate month index (0 for June, 1 for July, etc.)
+          const monthIndex = calculateMonthIndex(currentDashboardMonth);
+          
+          // Parse the data - passing the data array from the response
+          const dashboardData = parseMonthlySummary(dashboardCache, monthIndex);
+          
+          console.log('Parsed dashboard data:', dashboardData);
+          
+          // Render the dashboard
+          renderDashboard(dashboardData);
+          
+          // Update colors
+          updatePayByDateColors();
         }
 
         async function loadDashboardData() {
@@ -1132,20 +1164,11 @@
                 const rawData = await res.json();
                 
                 console.log('Raw data from sheet:', rawData);
+
+                dashboardCache = rawData.data; // Cache the raw data for later use
                 
-                // Calculate month index (0 for June, 1 for July, etc.)
-                const monthIndex = calculateMonthIndex(currentDashboardMonth);
-                
-                // Parse the data - passing the data array from the response
-                const dashboardData = parseMonthlySummary(rawData.data, monthIndex);
-                
-                console.log('Parsed dashboard data:', dashboardData);
-                
-                // Render the dashboard
-                renderDashboard(dashboardData);
-                
-                // Update colors
-                updatePayByDateColors();
+                renderDashboardFor(currentDashboardMonth);
+
             } catch (err) {
                 console.error('Failed to load dashboard data:', err);
                 // Show error state or use placeholder data
@@ -1153,10 +1176,10 @@
         }
 
         function calculateMonthIndex(dateObj) {
-            // Get June as month 0
+            // Get May as month 0
             // June = 5 (0-indexed), July = 6, etc.
-            const juneMonthIndex = 5;
-            const monthIndex = dateObj.getMonth() - juneMonthIndex;
+            const startingMonthIndex = 4; // May is month 4 in 0-indexed
+            const monthIndex = dateObj.getMonth() - startingMonthIndex;
             return Math.max(0, monthIndex); // Don't go negative
         }
 
@@ -1167,13 +1190,13 @@
 
         function navigateMonth(direction) {
             currentDashboardMonth.setMonth(currentDashboardMonth.getMonth() + direction);
+            console.log('Navigated to month:', currentDashboardMonth.getMonth());
             updateDashboardMonth();
-            loadDashboardData(); // Reload data for new month
+            // loadDashboardData(); // Reload data for new month
+            renderDashboardFor(currentDashboardMonth); // Re-render using cached data
         }
 
         function updateDashboardMonth() {
-            const monthNames = ["January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"];
             const monthText = monthNames[currentDashboardMonth.getMonth()] + ' ' + currentDashboardMonth.getFullYear();
             document.getElementById('dashboardMonth').textContent = monthText;
         }
@@ -1848,17 +1871,73 @@
         const icon = statusIcons[idx];
         const statusLower = item.status.toLowerCase();
         
-        icon.classList.remove('status-pending', 'status-paid', 'status-overdue');
+        // Determine the actual status
+        let actualStatus = 'pending';
         
         if (statusLower === 'paid') {
-          icon.classList.add('status-paid');
+          actualStatus = 'paid';
         } else if (statusLower === 'overdue' || isDateOverdue(item.payByDate)) {
-          icon.classList.add('status-overdue');
+          actualStatus = 'overdue';
+        } else if (isDateCloseToDue(item.payByDate)) {
+          actualStatus = 'due-soon';
         } else {
-          icon.classList.add('status-pending');
+          actualStatus = 'pending';
         }
+        
+        // Remove all status classes
+        icon.classList.remove('status-pending', 'status-paid', 'status-overdue', 'status-due-soon');
+        
+        // Add the appropriate status class
+        icon.classList.add(`status-${actualStatus}`);
+        
+        // Update the SVG icon based on status
+        updateIconSVG(icon, actualStatus);
       }
     });
+  }
+
+  /**
+   * Update the SVG icon inside the status-icon element
+   */
+  function updateIconSVG(iconElement, status) {
+    const svg = iconElement.querySelector('svg');
+    
+    if (status === 'paid') {
+      // Green checkmark for paid
+      if (svg) svg.innerHTML = '<path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" fill="none"/>';
+    } else if (status === 'overdue') {
+      // Red warning icon for overdue
+      if (svg) svg.innerHTML = '<path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" fill="none"/>';
+    } else if (status === 'due-soon') {
+      // Yellow warning icon for due soon
+      if (svg) svg.innerHTML = '<path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" fill="none"/>';
+    }
+    // For pending, the display: none CSS will hide it
+  }
+
+  /**
+   * Check if a date is close to due (within 7 days)
+   */
+  function isDateCloseToDue(dateStr) {
+    if (!dateStr) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const parts = dateStr.split(' ');
+    if (parts.length === 2) {
+      const monthAbbr = parts[0];
+      const day = parseInt(parts[1]);
+      
+      const year = today.getFullYear();
+      const dueDate = new Date(year, getMonthIndex(monthAbbr), day);
+      
+      const daysUntilDue = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+      
+      return daysUntilDue >= 0 && daysUntilDue <= 7;
+    }
+    
+    return false;
   }
 
   /**
