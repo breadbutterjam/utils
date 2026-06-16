@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>days to</title>
+    <script type="text/javascript">
+
+        function rerenderMe(){
+            let dd = window.location.href; 
+            let dd2;
+            if (dd.split("?").length === 0){
+                dd2 = window.location.href + "?x";
+            }else{
+                dd2 = dd.split("?")[0] + "?x";
+            }
+
+            window.location.href = dd2;
+        }
+
+        function showHide(param){
+            if (param){
+                 aa = document.querySelectorAll('.aa');
+                    aa.forEach(function(elem){
+                        elem.classList.add("hdn");
+                    })
+
+                    document.querySelector('.dtHolder').classList.remove("hdn");
+            }
+            else {
+                 aa = document.querySelectorAll('.aa');
+                    aa.forEach(function(elem){
+                        elem.classList.remove("hdn");
+                    })
+
+                    document.querySelector('.dtHolder').classList.add("hdn");
+            }
+        }
+
+        function shwDaysRem(){
+            // let 
+            // alert("showing days rem")
+            let targetDate = new Date(document.querySelector("#dt").value);
+
+            let strTargetDate = String(targetDate.getMonth() + 1) + "/" + String(targetDate.getDate()) + "/" + String(targetDate.getFullYear()); 
+            console.log("strTargetDate", strTargetDate)
+            calculateDays(strTargetDate);
+            showHide(false)
+        }
+
+        function init(){
+            let strURL = window.location.href;
+            let arrParams = strURL.split("?");
+            let aa;
+
+            if (arrParams.length > 1){
+                //if there is a ? in the URL - custom date is expected
+
+                //check if wildcard x is in the URL
+                if (arrParams[1].length === 1){
+                    showHide(true);
+                }
+            }
+            else {
+                calculateDays();
+            }
+            
+           
+        }
+
+        function calculateDays(param){
+
+
+            let cDt, cMt; 
+            let a = new Date();
+            cDt = a.getDate();
+            cMt = a.getMonth();
+            
+            cMt++;
+
+            let strCurrentDate = cMt + "/" + cDt + "/" + "2024";
+            console.log("strCurrentDate", strCurrentDate)
+
+
+            // JavaScript program to illustrate
+            // calculation of no. of days between two date
+            
+            // To set two dates to two variables
+            // var date1 = new Date("06/30/2019");
+            var date1 = new Date(strCurrentDate);
+            
+            var date2;
+            console.log("param", param)
+            if (param === undefined){
+                date2 = new Date("06/05/2024");     
+            }else {
+                date2 = new Date(param);
+            }
+            
+            console.log("date2", date2)
+
+
+            // To calculate the time difference of two dates
+            var Difference_In_Time = date2.getTime() - date1.getTime();
+            
+            // To calculate the no. of days between two dates
+            var Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+            
+            document.querySelector('.valueDiv').innerText = Difference_In_Days
+
+            renderTargetDate(date2);
+
+            //To display the final no. of days (result)
+            // console.log("Total number of days between dates <br>"
+            //         + date1 + "<br> and <br>"
+            //         + date2 + " is: <br> "
+            //         + Difference_In_Days);
+	
+            //code "copied" from https://www.geeksforgeeks.org/how-to-calculate-the-number-of-days-between-two-dates-in-javascript/
+
+        }
+
+        function renderTargetDate(param){
+            let dt, mt, yr;
+            dt = String(param.getDate());
+            mt = String(param.getMonth() + 1);
+            yr = String(param.getFullYear());
+
+            if (dt.length === 1){
+                dt = "0" + dt; 
+            }
+
+            if (mt.length === 1){
+                mt = "0" + mt; 
+            }
+
+            let strFinal = dt + "/" + mt + "/" + yr;
+            document.querySelector('.bb').innerText = strFinal;
+
+        }
+    </script>
+    <style>
+        body{
+            text-align: center;
+            padding-top: 30vh;
+        }
+        .label1{
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .valueDiv{
+            font-size: 10em;
+        }
+        .hdn{
+            display: none;
+        }
+        
+    </style>
+</head>
+<body onload="init();">
+    <div class="valueDiv aa" onclick="rerenderMe();">
+        92
+    </div>
+    <div class="label1 aa">
+        to
+    </div>
+    <div class="label1 aa bb">
+        jamsayshello
+    </div>
+    <div class="dtHolder hdn">
+        <input type="date" value="31/03/2023" id="dt">
+        <input type="button" value="show" id="btnShw" onclick="shwDaysRem()"/>
+    </div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dates</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script type="text/javascript" src="jQuery.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+	<script type="text/javascript" src="script.js"></script>
+	<!-- <script type="text/javascript" src="data.js"></script> -->
+	<style>
+		body{
+			font-family: sans-serif;
+		}
+		.flexCont{
+			display: flex;
+		}
+		
+		.flexVert{
+			flex-direction: column;
+		}
+		
+        .bigInput{
+			border-radius: 4px;
+			padding: 10px;
+			font-size: 2em;
+			font-weight: 700;
+			max-width: 89vw;
+			width: 300px;
+			border: 1px solid;		
+			
+		}
+		
+		.labelValueCont{
+			padding-bottom: 16px;
+		}
+		
+		#btnCalculate{
+			margin-top: auto;
+			margin-bottom: auto;
+			font-size: 2em;
+			max-width:90%
+		}
+		.parentCont{
+			max-width: 360px;
+		}
+		
+		.clearHolder{
+			margin-top: auto;
+			margin-bottom: auto;
+			padding-left: 8px;
+			padding-right: 8px;
+			/*background-color: aliceblue;
+			border: 1px solid;*/
+			line-height: 3em;
+			cursor: pointer;
+			color: lightskyblue;
+		
+		}
+		
+		.lnk{
+			text-decoration: underline;
+			color: lightskyblue;
+			font-size: 0.75em;
+			padding-top: 4px;
+		}
+		
+    </style>
+</head>
+<body onload="onBodyLoad()">
+   <div class="parentCont flexCont flexVert">
+		<div class="fromMainHolder flexCont">
+			<div class="fromHolder flexCont flexVert labelValueCont">
+				<label for="dtFrom">From</label>
+				<input id="dtFrom" class="bigInput datePicker2">
+				<div class="lnk tday">today</div>
+			</div>
+			<div class="clearHolder">X</div>
+		</div>
+		<div class="fromMainHolder flexCont">
+			<div class="toHolder flexCont flexVert labelValueCont">
+				<label for="dtTo">To</label>
+				<input id="dtTo" class="bigInput datePicker2">
+				<div class="lnk tday">today</div>
+			</div>
+			<div class="clearHolder">X</div>
+		</div>
+		<div class="fromMainHolder flexCont">
+			<div class="daysHolder flexCont flexVert labelValueCont">
+				<label for="inpDays">Count</label>
+				<input type="number" step="1" id="inpDays" style="width: 100px;" class="bigInput" value="0" />
+			</div>
+			<div class="clearHolder">X</div>
+		</div>
+		<div class="daysHolder flexCont flexVert labelValueButtonCont">
+			<input type="button" id="btnCalculate" value="Calculate" onclick="calculate()" />
+		</div>
+	</div>
+
+	
+	
+
+	<div class="resultContParent flexCont">
+		<div class="daysHolder resultCont">
+			<div class="daysValue resultValue">12</div>
+			<div class="resultLabel">days</div>
+		</div>
+		<div class="weeksHolder resultCont">
+			<div class="weeksValue resultValue">12</div>
+			<div class="resultLabel">weeks</div>
+		</div>
+		<!-- <div class="monthsHolder resultCont">
+			<div class="monthsValue resultValue">12</div>
+			<div class="resultLabel">months</div>
+		</div>
+		<div class="yearsHolder resultCont">
+			<div class="yearsValue resultValue">12</div>
+			<div class="resultLabel">years</div>
+		</div> -->
+
+	</div>
+
+
+	<div class="dateResultContParent flexCont">
+		<div class="dateHolder2 resultCont2">
+			<div class="dateValue resultValue">12-July-2020</div>
+		</div>
+	</div>
+</body>
+</html>
