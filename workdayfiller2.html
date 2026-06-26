@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JSON Table Editor</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f8fafc;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        vertical-align: top;
+    }
+
+    th {
+        background: #f1f5f9;
+        text-align: left;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 6px;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .cell {
+        display: flex;
+        gap: 6px;
+    }
+
+    button {
+        padding: 4px 8px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background: #eee;
+    }
+
+    button:hover {
+        background: #ddd;
+    }
+</style>
+</head>
+<body>
+
+<h2>Experience Table</h2>
+
+<table id="table"></table>
+
+<script>
+const data = [
+{
+                    id: "1",
+                    designation: "UX Architect",
+                    organisation: "Srijan (now Material)",
+                    from: "2022-02-09",
+                    to: "2025-05-16",
+                    description: "Led end-to-end UX activities including discovery workshops, requirement analysis, information architecture, persona, journey flows, wireframes, and prototypes.\n\nFacilitated problem-framing sessions with stakeholders, reducing design ambiguity and shortening overall iteration cycles by as much as 50%.\n\nCollaborated with PMs, engineering, and QA to ensure alignment from concept to delivery.\n\nAs part of RFP responses and soft pitches, defined design approach, deliverables, and timelines for multi-million dollar client engagements.\n\nInstitutionalised design consistency through process improvement and establishment of internal design library. Reduced discussion cycles with the development team in half.",
+                    shortDescription: "Led UX for enterprise clients: discovery, IA, wireframes & prototypes. Shaped RFP responses for multi-million dollar engagements. Cut iteration cycles by 50% and halved dev discussion cycles.",
+                    location: "Mumbai (remote)"
+                },
+                {
+                    id: "2",
+                    designation: "UX Architect",
+                    organisation: "Trigyn Technologies",
+                    from: "2021-04-01",
+                    to: "2022-02-08",
+                    description: "Owned UX for multiple key accounts, designing elegant solutions for complex workflows and enterprise applications. \n\nWorked on a foot-in-the-door opportunity that led to repeat multi-year engagement turning the division into a profit center. \n\nSupported recruitment, onboarding, and mentoring of the UX team. \n\nWorked on RFP responses contributing with UX scope definition, estimation, staffing and planning. \n\nCreated UX frameworks and design workflows improving delivery turnaround times. \n\nConducted user experience surveys that helped better define the problem statement.",
+                    shortDescription: "Owned UX across key accounts; drove a foot-in-the-door win into a multi-year profit center. Built UX frameworks, led RFP contributions, and supported team recruitment and mentoring.",
+                    location: "Mumbai"
+                },
+                {
+                    id: "3",
+                    designation: "Associate Manager - UX",
+                    organisation: "Trigyn Technologies",
+                    from: "2019-10-23",
+                    to: "2021-03-31",
+                    description: "Brought in design leadership to ongoing projects. Introduced user centric approach bringing in over 500k of improvements that helped \n\nimprove user engagement and reduce support tickets by over 40%.\n\nStarting building the UX team from scratch: pitched to leadership need for having a dedicated design team, defined the hiring pipeline, conducted interviews, and developed training materials, and helped mentor juniors and peers.\n\nDelivered Information Architecture, wireframes, and prototypes for both internal and client-facing projects",
+                    shortDescription: "Introduced UX leadership; drove 500k+ in improvements, cut support tickets 40%. Built the UX team from scratch—hiring, training, mentoring—and delivered IA, wireframes & prototypes.",
+                    location: "Mumbai"
+                },
+                {
+                    id: "4",
+                    designation: "Project Manager",
+                    organisation: "Plum Tree",
+                    from: "2018-12-17",
+                    to: "2019-10-01",
+                    description: "Managed 10+ high-priority projects, ensuring timely delivery while maintaining quality standards.\n\nActed as the primary client contact for updates, priorities, and change requests, leading bi-weekly calls with clients while running day-to-day coordination across internal teams.\n\nCoordinated between design, development and business teams to ensure smooth project execution.",
+                    shortDescription: "Managed 10+ high-priority projects end-to-end. Served as primary client contact; led bi-weekly status calls and coordinated across design, development, and business teams.",
+                    location: "Mumbai"
+                },
+                {
+                    id: "5",
+                    designation: "Design Lead",
+                    organisation: "Zeuslearning",
+                    from: "2014-07-01",
+                    to: "2018-12-12",
+                    description: "Led a team of designers across multiple product lines, providing guidance from concept to deployment.\n\nConducted requirement analysis and collaborated with business teams on SOWs & proposals.\n\nCreated IA, low-fidelity wireframes, and interactive prototypes for enterprise and education platforms.\n\nDelivered design walkthroughs for internal teams and clients.\n\nPerformed alpha/beta reviews to ensure adherence to design specifications.\n\nAuthored detailed design documentation to streamline development and reduce dependency.\n\nLed recruitment and training: designed tests, evaluated candidates, and created onboarding modules.",
+                    shortDescription: "Led multi-product design team from concept to deployment. Created IA, wireframes & prototypes for enterprise platforms. Drove recruitment, training, and detailed design documentation.",
+                    location: "Mumbai"
+                },
+                {
+                    id: "6",
+                    designation: "Senior Web Developer",
+                    organisation: "Zeuslearning",
+                    from: "2012-01-01",
+                    to: "2014-06-30",
+                    description: "Built frameworks for interactive science-based learning modules.\n\nLed a 10-member team building STEM-focused digital experiences.\n\nStreamlined development workflows improving delivery speed",
+                    shortDescription: "Built frameworks for interactive STEM learning modules. Led a 10-member dev team and streamlined workflows to improve delivery speed.",
+                    location: "Mumbai"
+                },
+                {
+                    id: "7",
+                    designation: "Web Developer",
+                    organisation: "Zeuslearning",
+                    from: "2009-07-01",
+                    to: "2011-12-31",
+                    description: "Developed Flash/AS3 learning modules before transitioning to HTML-based development.\n\nContributed to major conversion projects modernizing legacy Flash content.",
+                    shortDescription: "Developed Flash/AS3 learning modules and contributed to major projects converting legacy Flash content to modern HTML-based formats.",
+                    location: "Mumbai"
+                }
+];
+
+// Get all keys except id
+const keys = Object.keys(data[0]).filter(k => k !== "id");
+
+const table = document.getElementById("table");
+
+// HEADER
+const thead = document.createElement("thead");
+const headerRow = document.createElement("tr");
+
+headerRow.innerHTML = "<th>ID</th>" + keys.map(k => `<th>${k}</th>`).join("");
+thead.appendChild(headerRow);
+table.appendChild(thead);
+
+// BODY
+const tbody = document.createElement("tbody");
+
+data.forEach(row => {
+    const tr = document.createElement("tr");
+
+    // ID column
+    const idCell = document.createElement("td");
+    idCell.textContent = row.id;
+    tr.appendChild(idCell);
+
+    // Other fields
+    keys.forEach(key => {
+        const td = document.createElement("td");
+        const wrapper = document.createElement("div");
+        wrapper.className = "cell";
+
+        let input;
+
+        if (key.toLowerCase().includes("description")) {
+            input = document.createElement("textarea");
+        } else {
+            input = document.createElement("input");
+        }
+
+        input.value = row[key] || "";
+
+        // Update JSON on edit
+        input.addEventListener("input", () => {
+            row[key] = input.value;
+        });
+
+        // Copy button
+        const btn = document.createElement("button");
+        btn.textContent = "Copy";
+
+        btn.onclick = () => copyText(input.value);
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(btn);
+        td.appendChild(wrapper);
+        tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+});
+
+table.appendChild(tbody);
+
+// COPY FUNCTION
+function copyText(text) {
+    if (!text) return alert("Nothing to copy");
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text)
+            .then(() => alert("Copied!"))
+            .catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    alert("Copied!");
+}
+</script>
+
+</body>
+</html>
