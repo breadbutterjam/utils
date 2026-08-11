@@ -61,11 +61,35 @@ button {
   cursor: pointer;
 }
 
+#copyToast {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+
+  background: #222;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+}
+
+#copyToast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 
   </style>
 </head>
 <body>
-
+<div id="copyToast">✓ Copied</div>
 <h2>Experience Table</h2>
 
 <div class="toggle-group">
@@ -182,8 +206,20 @@ function buildHeader() {
 }
 
 // Copy helper
+let copyToastTimer;
+
 function copyToClipboard(value) {
-  navigator.clipboard.writeText(value);
+  navigator.clipboard.writeText(value).then(() => {
+    const toast = document.getElementById("copyToast");
+
+    toast.classList.add("show");
+
+    clearTimeout(copyToastTimer);
+
+    copyToastTimer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 1500);
+  });
 }
 
 // Create input cell
