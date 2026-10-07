@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Road trip cost calculator</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* ==========================================================
+   DESIGN TOKENS — change these to re-theme the page
+   ========================================================== */
+:root {
+  --color-bg:        #ffffff;
+  --color-text:      #1d1d1f;
+  --color-muted:     #6b7280;
+  --color-border:    #c9ced6;
+  --color-accent:    #0f766e;
+  --color-accent-fg: #ffffff;
+  --color-focus:     #0f766e;
+
+  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-title:  1.35rem;
+  --fs-label:  0.9rem;
+  --fs-input:  1.1rem;
+  --fs-help:   0.75rem;
+  --fs-result: 2.4rem;
+
+  --page-width: 440px;
+  --gap:        1.25rem;
+  --radius:     8px;
+  --input-h:    40px;
+  --icon-size:  64px;
+  --map-height: 240px;
+}
+
+/* ==========================================================
+   BASE
+   ========================================================== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+}
+.app {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 1rem 1.2rem 2rem;
+}
+h1 {
+  font-size: var(--fs-title);
+  margin: 0 0 1rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ==========================================================
+   VEHICLE PILLS
+   ========================================================== */
+.pills { 
+  display: flex; 
+  /* gap: .5rem;  */
+  margin-bottom: var(--gap); 
+}
+.pills button {
+  flex: 1;
+  height: var(--input-h);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.pills button[aria-pressed="true"] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+
+.pills button:first-child { 
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.pills button:nth-child(2) {
+  border-radius: 0;
+}
+
+.pills button:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+
+/* ==========================================================
+   FIELDS (two-column rows)
+   ========================================================== */
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+.field label { display: block; font-size: var(--fs-label); margin-bottom: .3rem; }
+.field input {
+  width: 100%;
+  height: var(--input-h);
+  padding: 0 .6rem;
+  font: inherit;
+  font-size: var(--fs-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.field input:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.help { margin: .3rem 0 0; font-size: var(--fs-help); color: var(--color-muted); }
+
+/* ==========================================================
+   RESULTS
+   ========================================================== */
+.results { margin-top: 2rem; display: grid; gap: 1.2rem; }
+.result { display: flex; align-items: center; gap: 1rem; }
+.result img { width: var(--icon-size); height: var(--icon-size); object-fit: contain; }
+.result .name { font-size: var(--fs-label); color: var(--color-muted); }
+.result .value { font-size: var(--fs-result); font-weight: 700; line-height: 1.1; }
+.result .unit { font-size: var(--fs-label); font-weight: 400; color: var(--color-muted); }
+
+/* ==========================================================
+   ROUTE FINDER (collapsible, optional)
+   ========================================================== */
+.finder { margin-bottom: var(--gap); border: 1px solid var(--color-border); border-radius: var(--radius); }
+.finder > summary { padding: .6rem .8rem; cursor: pointer; font-size: var(--fs-label); font-weight: 600; }
+.finder-body { padding: 0 .8rem .8rem; display: grid; gap: .6rem; }
+.place { position: relative; }
+.place input, .key-row input {
+  width: 100%; height: var(--input-h); padding: 0 .6rem; font: inherit; font-size: .95rem;
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  background: var(--color-bg); color: var(--color-text);
+}
+.place input:focus, .key-row input:focus { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.suggest {
+  position: absolute; z-index: 1000; left: 0; right: 0; top: calc(100% + 2px);
+  margin: 0; padding: 0; list-style: none; max-height: 220px; overflow-y: auto;
+  background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+.suggest li { padding: .5rem .6rem; font-size: .85rem; cursor: pointer; }
+.suggest li:hover, .suggest li.active { background: var(--color-accent); color: var(--color-accent-fg); }
+#map { height: var(--map-height); border-radius: var(--radius); border: 1px solid var(--color-border); }
+.route-result { margin: 0; font-size: var(--fs-label); min-height: 1.2em; }
+.route-result.error { color: #b91c1c; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--color-accent); font: inherit; font-size: var(--fs-help); cursor: pointer; text-decoration: underline; justify-self: start; }
+.key-row { display: grid; gap: .3rem; }
+[hidden] { display: none !important; }
+</style>
+</head>
+
+<body>
+<!-- ==========================================================
+     STRUCTURE
+     ========================================================== -->
+<main class="app">
+  <h1>Road trip cost calculator</h1>
+
+  <div class="pills" id="vehicle" role="group" aria-label="Vehicle type"></div>
+
+  <!-- Optional: look up road distance (fills One-way distance) -->
+  <details class="finder" id="finder">
+    <summary>Find distance by road</summary>
+    <div class="finder-body">
+      <div class="key-row" id="keyRow" hidden>
+        <input id="keyInput" type="text" placeholder="Paste your OpenRouteService API key" autocomplete="off">
+        <p class="help">Free key from openrouteservice.org. Saved only in this browser.</p>
+      </div>
+      <div class="place"><input id="fromInput" type="text" placeholder="From (search or tap map)" autocomplete="off"><ul class="suggest" id="fromList" hidden></ul></div>
+      <div class="place"><input id="toInput" type="text" placeholder="To (search or tap map)" autocomplete="off"><ul class="suggest" id="toList" hidden></ul></div>
+      <div id="map"></div>
+      <p class="help">Tap the map to drop From, then To. Drag pins to adjust. Another tap moves To.</p>
+      <p class="route-result" id="routeResult" aria-live="polite"></p>
+      <button type="button" class="link-btn" id="clearRoute">Clear</button>
+    </div>
+  </details>
+
+  <div class="row">
+    <div class="field">
+      <label for="oneWay">One-way distance</label>
+      <input id="oneWay" type="number" inputmode="decimal" min="0" step="any" autofocus>
+      <p class="help" data-unit="distance">in km</p>
+    </div>
+    <div class="field">
+      <label for="total">Total distance</label>
+      <input id="total" type="number" inputmode="decimal" min="0" step="any">
+      <p class="help" data-unit="distance">in km, round trip</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label for="economy">Fuel economy</label>
+      <input id="economy" type="number" inputmode="decimal" min="0" step="any">
+      <p class="help" id="economyHelp"></p>
+    </div>
+    <div class="field">
+      <label for="cost">Cost of fuel</label>
+      <input id="cost" type="number" inputmode="decimal" min="0" step="any">
+      <p class="help" id="costHelp"></p>
+    </div>
+  </div>
+
+  <section class="results" aria-live="polite">
+    <div class="result">
+      <img src="Fuelpump.png" alt="">
+      <div>
+        <div class="name">Fuel used</div>
+        <div class="value"><span id="fuelUsed">0</span> <span class="unit" id="fuelUnit"></span></div>
+      </div>
+    </div>
+    <div class="result">
+      <img src="rupee.png" alt="">
+      <div>
+        <div class="name">Cost</div>
+        <div class="value"><span id="totalCost">0</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ==========================================================
+   CONFIG — easily swappable values
+   ========================================================== */
+const CONFIG = {
+  storageKey: "roadTripCalc.v1",
+  currency: "₹",
+  distanceUnit: "km",
+  defaultVehicle: "petrol",
+  // Route finder (OpenRouteService + OpenStreetMap). Swap provider by editing the functions in ROUTE FINDER.
+  ors: {
+    apiKey: "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQ0ZTFlMDM3M2U3MTRhOTk5OWY5ZTQ1YzJiYmMwODlkIiwiaCI6Im11cm11cjY0In0=",                 // paste your key here, or leave empty and the page will ask once
+    keyStorage: "roadTripCalc.orsKey",
+    base: "https://api.openrouteservice.org",
+    profile: "driving-car",
+    country: "IN",              // limit search to this country (ISO code); "" for worldwide
+    minChars: 3,
+    debounceMs: 300,
+    maxSuggestions: 5
+  },
+  map: {
+    center: [19.076, 72.8777],  // Mumbai
+    zoom: 6,
+    tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "&copy; OpenStreetMap contributors | Routing &copy; openrouteservice.org"
+  },
+  // Placeholder defaults, used until the user has saved their own values.
+  vehicles: {
+    petrol: { label: "Petrol", economy: 15, cost: 105, economyUnit: "km/L",   costUnit: "₹/L",   fuelUnit: "L"   },
+    diesel: { label: "Diesel", economy: 18, cost: 92,  economyUnit: "km/L",   costUnit: "₹/L",   fuelUnit: "L"   },
+    ev:     { label: "EV",     economy: 6,  cost: 10,  economyUnit: "km/kWh", costUnit: "₹/kWh", fuelUnit: "kWh" }
+  }
+};
+
+/* ==========================================================
+   STATE + DOM
+   ========================================================== */
+const $ = id => document.getElementById(id);
+const el = { oneWay: $("oneWay"), total: $("total"), economy: $("economy"), cost: $("cost"),
+             fuelUsed: $("fuelUsed"), totalCost: $("totalCost"), fuelUnit: $("fuelUnit"),
+             economyHelp: $("economyHelp"), costHelp: $("costHelp"), vehicle: $("vehicle") };
+
+let vehicle = CONFIG.defaultVehicle;
+let saved = {};   // loaded from localStorage ONCE on first load, then kept up to date in memory
+
+/* ==========================================================
+   STORAGE
+   ========================================================== */
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || {}; }
+  catch (e) { return {}; }
+}
+function persist() {
+  try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(saved)); } catch (e) {}
+}
+
+/* ==========================================================
+   VEHICLE SWITCHING
+   ========================================================== */
+function applyVehicle(type) {
+  vehicle = type;
+  const v = CONFIG.vehicles[type];
+  const last = saved[type] || {};
+  el.economy.value = last.economy ?? v.economy;
+  el.cost.value    = last.cost    ?? v.cost;
+  el.economyHelp.textContent = "in " + v.economyUnit;
+  el.costHelp.textContent    = "in " + v.costUnit;
+  el.fuelUnit.textContent    = v.fuelUnit;
+  el.vehicle.querySelectorAll("button").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.type === type));
+  calculate();
+}
+
+function buildPills() {
+  for (const [type, v] of Object.entries(CONFIG.vehicles)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.type = type;
+    b.textContent = v.label;
+    b.addEventListener("click", () => applyVehicle(type));
+    el.vehicle.appendChild(b);
+  }
+}
+
+/* ==========================================================
+   DISTANCE SYNC (one-way <-> total, two-way)
+   Only the field being typed in drives the other, so no loops.
+   ========================================================== */
+const num = s => (s === "" || isNaN(+s)) ? null : +s;
+const round = n => Math.round(n * 100) / 100;
+
+el.oneWay.addEventListener("input", () => {
+  const v = num(el.oneWay.value);
+  el.total.value = v === null ? "" : round(v * 2);
+  calculate();
+});
+el.total.addEventListener("input", () => {
+  const v = num(el.total.value);
+  el.oneWay.value = v === null ? "" : round(v / 2);
+  calculate();
+});
+
+/* ==========================================================
+   CALCULATION
+   ========================================================== */
+function calculate() {
+  const dist = num(el.total.value) || 0;
+  const eco  = num(el.economy.value) || 0;
+  const cost = num(el.cost.value) || 0;
+
+  const fuel  = eco > 0 ? dist / eco : 0;
+  const price = fuel * cost;
+
+  el.fuelUsed.textContent  = round(fuel).toLocaleString();
+  el.totalCost.textContent = CONFIG.currency + Math.round(price).toLocaleString();
+}
+
+[el.economy, el.cost].forEach(i => i.addEventListener("input", () => {
+  // remember last-used values for the selected vehicle type
+  saved[vehicle] = { economy: num(el.economy.value), cost: num(el.cost.value) };
+  persist();
+  calculate();
+}));
+
+/* ==========================================================
+   ROUTE FINDER
+   Search (typeahead) or tap map -> road distance -> One-way field
+   ========================================================== */
+const rf = {
+  finder: $("finder"), result: $("routeResult"), keyRow: $("keyRow"), keyInput: $("keyInput"),
+  from: { input: $("fromInput"), list: $("fromList"), point: null, marker: null },
+  to:   { input: $("toInput"),   list: $("toList"),   point: null, marker: null }
+};
+let map = null, routeLine = null, searchSeq = 0, routeSeq = 0;
+
+function getKey() {
+  if (CONFIG.ors.apiKey) return CONFIG.ors.apiKey;
+  try { return localStorage.getItem(CONFIG.ors.keyStorage) || ""; } catch (e) { return ""; }
+}
+function showKeyRow() { rf.keyRow.hidden = !!getKey(); }
+rf.keyInput.addEventListener("change", () => {
+  const k = rf.keyInput.value.trim();
+  try { localStorage.setItem(CONFIG.ors.keyStorage, k); } catch (e) {}
+  showKeyRow();
+});
+
+function say(msg, isError) {
+  rf.result.textContent = msg || "";
+  rf.result.classList.toggle("error", !!isError);
+}
+
+/* --- provider calls (swap these to change provider) --- */
+async function orsGet(path, params) {
+  const key = getKey();
+  if (!key) { showKeyRow(); throw new Error("Add your OpenRouteService key first."); }
+  const url = new URL(CONFIG.ors.base + path);
+  Object.entries({ api_key: key, ...params }).forEach(([k, v]) => v !== "" && url.searchParams.set(k, v));
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status === 403 || r.status === 401 ? "API key not accepted." :
+                             r.status === 429 ? "Daily free limit reached. Try again later." : "Search failed.");
+  return r.json();
+}
+const searchPlaces = text => orsGet("/geocode/autocomplete", {
+  text, size: CONFIG.ors.maxSuggestions, "boundary.country": CONFIG.ors.country });
+const reversePlace = ll => orsGet("/geocode/reverse", { "point.lat": ll.lat, "point.lon": ll.lng, size: 1 });
+async function getRoute(a, b) {
+  const key = getKey();
+  if (!key) { showKeyRow(); throw new Error("Add your OpenRouteService key first."); }
+  const r = await fetch(`${CONFIG.ors.base}/v2/directions/${CONFIG.ors.profile}/geojson`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: key },
+    body: JSON.stringify({ coordinates: [[a.lng, a.lat], [b.lng, b.lat]] })
+  });
+  if (r.status === 404) throw new Error("No road route found between these points.");
+  if (r.status === 401 || r.status === 403) throw new Error("API key not accepted.");
+  if (r.status === 429) throw new Error("Daily free limit reached. Try again later.");
+  if (!r.ok) throw new Error("Could not get a route.");
+  const f = (await r.json()).features[0];
+  return { km: f.properties.summary.distance / 1000, secs: f.properties.summary.duration,
+           line: f.geometry.coordinates.map(c => [c[1], c[0]]) };
+}
+
+/* --- map + points --- */
+function ensureMap() {
+  if (map) { map.invalidateSize(); return; }
+  if (typeof L === "undefined") { say("Map library could not load. Check your connection.", true); return; }
+  map = L.map("map").setView(CONFIG.map.center, CONFIG.map.zoom);
+  L.tileLayer(CONFIG.map.tiles, { attribution: CONFIG.map.attribution, maxZoom: 19 }).addTo(map);
+  map.on("click", e => {
+    const which = !rf.from.point ? "from" : "to";
+    setPoint(which, e.latlng, null);
+  });
+}
+rf.finder.addEventListener("toggle", () => { if (rf.finder.open) { showKeyRow(); ensureMap(); } });
+
+function setPoint(which, ll, label) {
+  const p = rf[which];
+  p.point = { lat: ll.lat, lng: ll.lng };
+  if (map) {
+    if (p.marker) p.marker.setLatLng(ll);
+    else {
+      p.marker = L.marker(ll, { draggable: true, title: which === "from" ? "From" : "To" }).addTo(map);
+      p.marker.on("dragend", () => setPoint(which, p.marker.getLatLng(), null));
+    }
+    p.marker.bindTooltip(which === "from" ? "From" : "To");
+  }
+  if (label) p.input.value = label;
+  else {
+    p.input.value = ll.lat.toFixed(4) + ", " + ll.lng.toFixed(4);
+    reversePlace(ll).then(d => {
+      const f = d.features && d.features[0];
+      if (f && rf[which].point && rf[which].point.lat === ll.lat) p.input.value = f.properties.label;
+    }).catch(() => {});
+  }
+  maybeRoute();
+}
+function clearPoint(which) {
+  const p = rf[which];
+  p.point = null;
+  if (p.marker && map) map.removeLayer(p.marker);
+  p.marker = null;
+  clearRouteLine();
+}
+function clearRouteLine() {
+  routeSeq++;
+  if (routeLine && map) map.removeLayer(routeLine);
+  routeLine = null;
+  say("");
+}
+$("clearRoute").addEventListener("click", () => {
+  ["from", "to"].forEach(w => { clearPoint(w); rf[w].input.value = ""; hideList(w); });
+});
+
+async function maybeRoute() {
+  if (!rf.from.point || !rf.to.point) return;
+  const seq = ++routeSeq;
+  say("Finding route…");
+  try {
+    const r = await getRoute(rf.from.point, rf.to.point);
+    if (seq !== routeSeq) return;
+    if (routeLine && map) map.removeLayer(routeLine);
+    if (map) { routeLine = L.polyline(r.line, { color: "#0f766e", weight: 5 }).addTo(map); map.fitBounds(routeLine.getBounds(), { padding: [30, 30] }); }
+    const h = Math.floor(r.secs / 3600), m = Math.round((r.secs % 3600) / 60);
+    say(`${round(r.km)} km by road · about ${h ? h + " h " : ""}${m} min. Filled One-way distance.`);
+    el.oneWay.value = Math.round(r.km * 10) / 10;
+    el.oneWay.dispatchEvent(new Event("input"));
+  } catch (e) {
+    if (seq === routeSeq) say(e.message, true);
+  }
+}
+
+/* --- typeahead --- */
+function hideList(which) { rf[which].list.hidden = true; rf[which].list.innerHTML = ""; }
+function pick(which, f) {
+  const [lng, lat] = f.geometry.coordinates;
+  hideList(which);
+  setPoint(which, { lat, lng }, f.properties.label);
+  if (map) map.setView([lat, lng], Math.max(map.getZoom(), 10));
+}
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+["from", "to"].forEach(which => {
+  const p = rf[which];
+  let items = [], active = -1;
+  const render = () => {
+    p.list.innerHTML = "";
+    items.forEach((f, i) => {
+      const li = document.createElement("li");
+      li.textContent = f.properties.label;
+      li.className = i === active ? "active" : "";
+      li.addEventListener("mousedown", e => { e.preventDefault(); pick(which, f); });
+      p.list.appendChild(li);
+    });
+    p.list.hidden = !items.length;
+  };
+  const lookup = debounce(async text => {
+    const seq = ++searchSeq;
+    try {
+      const d = await searchPlaces(text);
+      if (seq !== searchSeq) return;
+      items = d.features || []; active = -1; render();
+      if (!items.length) { say("No matches. Try a different spelling, or tap the map."); }
+    } catch (e) { say(e.message, true); }
+  }, CONFIG.ors.debounceMs);
+
+  p.input.addEventListener("input", () => {
+    if (p.point) clearPoint(which);          // text changed: old pin no longer matches
+    const text = p.input.value.trim();
+    if (text.length < CONFIG.ors.minChars) { items = []; render(); return; }
+    lookup(text);
+  });
+  p.input.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" && items.length) { active = (active + 1) % items.length; render(); e.preventDefault(); }
+    else if (e.key === "ArrowUp" && items.length) { active = (active - 1 + items.length) % items.length; render(); e.preventDefault(); }
+    else if (e.key === "Enter" && items.length) { pick(which, items[Math.max(active, 0)]); e.preventDefault(); }
+    else if (e.key === "Escape") { items = []; render(); }
+  });
+  p.input.addEventListener("blur", () => setTimeout(() => { items = []; render(); }, 150));
+});
+
+/* ==========================================================
+   INIT (localStorage read on first load only)
+   ========================================================== */
+saved = loadSaved();
+buildPills();
+applyVehicle(CONFIG.defaultVehicle);
+</script>
+</body>
+</html>
