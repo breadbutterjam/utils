@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tithi Festival JSON Utility</title>
+<style>
+  :root {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #222;
+    background: #f5f5f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { margin: 0 0 8px; font-size: 28px; }
+  .intro { color: #666; margin: 0 0 24px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .upload-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  input[type="file"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    background: #fff;
+  }
+  button {
+    border: 0;
+    border-radius: 7px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: #222;
+    color: white;
+    font-size: 14px;
+  }
+  button.secondary { background: #666; }
+  button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  .status {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    display: none;
+    white-space: pre-wrap;
+  }
+  .status.ok { display: block; background: #eaf7ed; color: #17652a; }
+  .status.error { display: block; background: #fdecec; color: #9b1c1c; }
+  .output {
+    margin-bottom: 20px;
+  }
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  h2 { font-size: 18px; margin: 0; }
+  .button-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  textarea {
+    display: block;
+    width: 100%;
+    min-height: 210px;
+    resize: vertical;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    background: #fafafa;
+  }
+  .note {
+    font-size: 13px;
+    color: #777;
+    margin-top: 8px;
+  }
+  code {
+    background: #f0f0f0;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tithi Festival JSON Utility</h1>
+  <p class="intro">
+    Upload the CSV exported from your Google Sheet. The utility converts each festival row into
+    the two formats used by your project.
+  </p>
+
+  <div class="panel">
+    <div class="upload-row">
+      <input type="file" id="csvFile" accept=".csv,text/csv">
+      <button id="generateBtn" disabled>Generate outputs</button>
+    </div>
+    <div id="status" class="status"></div>
+    <div class="note">
+      Expected columns:
+      <code>Month</code>,
+      <code>Month index</code>,
+      <code>Tithi</code>,
+      <code>Tithi index</code>,
+      <code>Festival Name (Key)</code>,
+      <code>English</code>
+    </div>
+  </div>
+
+  <div class="panel output">
+    <div class="output-header">
+      <h2>1. TITHI_FESTIVALS</h2>
+      <div class="button-group">
+        <button class="secondary" id="copyTithiBtn" disabled>Copy</button>
+        <button id="downloadTithiBtn" disabled>Download .js</button>
+      </div>
+    </div>
+    <textarea id="tithiOutput" readonly spellcheck="false"
+      placeholder="Upload a CSV to generate the TITHI_FESTIVALS output..."></textarea>
+    <div class="note">This is JavaScript rather than strict JSON because it includes the <code>const TITHI_FESTIVALS =</code> declaration.</div>
+  </div>
+
+  <div class="panel output">
+    <div class="output-header">
+      <h2>2. festivals blob for en.json</h2>
+      <div class="button-group">
+        <button class="secondary" id="copyFestivalsBtn" disabled>Copy</button>
+        <button id="downloadFestivalsBtn" disabled>Download .json</button>
+      </div>
+    </div>
+    <textarea id="festivalsOutput" readonly spellcheck="false"
+      placeholder="Upload a CSV to generate the festivals object..."></textarea>
+    <div class="note">This is the object you can place inside the <code>"festivals"</code> property of your en.json file.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const EXPECTED_HEADERS = [
+    "Month",
+    "Month index",
+    "Tithi",
+    "Tithi index",
+    "Festival Name (Key)",
+    "English"
+  ];
+
+  const csvFile = document.getElementById("csvFile");
+  const generateBtn = document.getElementById("generateBtn");
+  const status = document.getElementById("status");
+
+  const tithiOutput = document.getElementById("tithiOutput");
+  const festivalsOutput = document.getElementById("festivalsOutput");
+
+  const copyTithiBtn = document.getElementById("copyTithiBtn");
+  const copyFestivalsBtn = document.getElementById("copyFestivalsBtn");
+  const downloadTithiBtn = document.getElementById("downloadTithiBtn");
+  const downloadFestivalsBtn = document.getElementById("downloadFestivalsBtn");
+
+  let currentTithiText = "";
+  let currentFestivalsText = "";
+
+  csvFile.addEventListener("change", () => {
+    generateBtn.disabled = !csvFile.files.length;
+    if (csvFile.files.length) {
+      setStatus("CSV selected. Click “Generate outputs”.", "ok");
+    } else {
+      clearOutputs();
+      hideStatus();
+    }
+  });
+
+  generateBtn.addEventListener("click", async () => {
+    const file = csvFile.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const rows = parseCSV(text);
+
+      if (!rows.length) {
+        throw new Error("The CSV appears to be empty.");
+      }
+
+      const headers = rows[0].map(h => h.trim());
+      validateHeaders(headers);
+
+      const dataRows = rows
+        .slice(1)
+        .filter(row => row.some(cell => cell.trim() !== ""));
+
+      if (!dataRows.length) {
+        throw new Error("No festival data rows were found.");
+      }
+
+      const festivals = [];
+      const seenKeys = new Set();
+      const errors = [];
+
+      dataRows.forEach((row, index) => {
+        const lineNumber = index + 2;
+        const record = {};
+
+        headers.forEach((header, i) => {
+          record[header] = (row[i] ?? "").trim();
+        });
+
+        const key = record["Festival Name (Key)"];
+        const monthIndex = record["Month index"];
+        const tithiIndex = record["Tithi index"];
+        const english = record["English"];
+
+        if (!key) errors.push(`Row ${lineNumber}: Festival Name (Key) is empty.`);
+        if (!monthIndex) errors.push(`Row ${lineNumber}: Month index is empty.`);
+        if (!tithiIndex) errors.push(`Row ${lineNumber}: Tithi index is empty.`);
+        if (!english) errors.push(`Row ${lineNumber}: English is empty.`);
+
+        if (key && seenKeys.has(key)) {
+          errors.push(`Row ${lineNumber}: duplicate Festival Name (Key) "${key}".`);
+        }
+        if (key) seenKeys.add(key);
+
+        if (monthIndex && !Number.isInteger(Number(monthIndex))) {
+          errors.push(`Row ${lineNumber}: Month index "${monthIndex}" is not an integer.`);
+        }
+        if (tithiIndex && !Number.isInteger(Number(tithiIndex))) {
+          errors.push(`Row ${lineNumber}: Tithi index "${tithiIndex}" is not an integer.`);
+        }
+
+        if (
+          key &&
+          monthIndex &&
+          tithiIndex &&
+          english &&
+          Number.isInteger(Number(monthIndex)) &&
+          Number.isInteger(Number(tithiIndex))
+        ) {
+          festivals.push({
+            key,
+            month: Number(monthIndex),
+            tithi: Number(tithiIndex),
+            english
+          });
+        }
+      });
+
+      if (errors.length) {
+        throw new Error(errors.join("\n"));
+      }
+      console.log("festivals", festivals);
+      currentTithiText = buildTithiOutput2(festivals);
+      currentFestivalsText = buildFestivalsOutput(festivals);
+
+      tithiOutput.value = currentTithiText;
+      festivalsOutput.value = currentFestivalsText;
+
+      copyTithiBtn.disabled = false;
+      copyFestivalsBtn.disabled = false;
+      downloadTithiBtn.disabled = false;
+      downloadFestivalsBtn.disabled = false;
+
+      setStatus(
+        `Generated ${festivals.length} festival${festivals.length === 1 ? "" : "s"} successfully.`,
+        "ok"
+      );
+    } catch (error) {
+      clearOutputs();
+      setStatus(error.message || "Could not process the CSV.", "error");
+    }
+  });
+
+  copyTithiBtn.addEventListener("click", () => copyText(currentTithiText, copyTithiBtn));
+  copyFestivalsBtn.addEventListener("click", () => copyText(currentFestivalsText, copyFestivalsBtn));
+
+  downloadTithiBtn.addEventListener("click", () => {
+    downloadFile("tithi_festivals.js", currentTithiText, "text/javascript;charset=utf-8");
+  });
+
+  downloadFestivalsBtn.addEventListener("click", () => {
+    downloadFile("festivals.json", currentFestivalsText, "application/json;charset=utf-8");
+  });
+
+  function buildTithiOutput2(festivals) {
+    const obj = {};
+    const lines = festivals.map(f =>
+      `{ key: ${JSON.stringify(f.key)}, month: ${f.month}, tithi: ${f.tithi} },`
+    );
+
+    // console.log("lines", lines);
+
+    var str = '';
+    lines.forEach(function (line, index) {
+      str += line + '\n';
+    });
+
+    return "const TITHI_FESTIVALS = ["+str+"];";
+
+    // return lines; 
+    // return JSON.stringify(lines, null, 2)
+    // .replace(/\]$/, "];");
+      // .replace(/^\[/, "const TITHI_FESTIVALS = [")
+      
+  }
+
+  function buildTithiOutput(festivals) {
+    const lines = festivals.map(f =>
+      `    { key: ${JSON.stringify(f.key)}, month: ${f.month}, tithi: ${f.tithi} },`
+    );
+
+    return [
+      "const TITHI_FESTIVALS = [",
+      ...lines,
+      "];"
+    ].join("\\n");
+  }
+
+  function buildFestivalsOutput(festivals) {
+    const obj = {};
+    festivals.forEach(f => {
+      obj[f.key] = f.english;
+    });
+
+    return JSON.stringify(obj, null, 2);
+  }
+
+  function validateHeaders(headers) {
+    if (headers.length !== EXPECTED_HEADERS.length) {
+      throw new Error(
+        `Expected exactly ${EXPECTED_HEADERS.length} columns, but found ${headers.length}.\\n` +
+        `Expected: ${EXPECTED_HEADERS.join(", ")}`
+      );
+    }
+
+    const mismatch = EXPECTED_HEADERS.find((header, i) => headers[i] !== header);
+    if (mismatch) {
+      throw new Error(
+        `CSV header mismatch. Expected column ${EXPECTED_HEADERS.indexOf(mismatch) + 1} to be "${mismatch}", ` +
+        `but found "${headers[EXPECTED_HEADERS.indexOf(mismatch)] || "(empty)"}".`
+      );
+    }
+  }
+
+  // Small RFC-4180-style CSV parser. Handles quoted fields and commas inside quotes.
+  function parseCSV(text) {
+    text = text.replace(/^\uFEFF/, "");
+
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const next = text[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && next === '"') {
+          field += '"';
+          i++;
+        } else if (char === '"') {
+          inQuotes = false;
+        } else {
+          field += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === ",") {
+          row.push(field);
+          field = "";
+        } else if (char === "\n") {
+          row.push(field.replace(/\r$/, ""));
+          rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += char;
+        }
+      }
+    }
+
+    if (inQuotes) {
+      throw new Error("The CSV contains an unterminated quoted field.");
+    }
+
+    if (field !== "" || row.length) {
+      row.push(field);
+      rows.push(row);
+    }
+
+    return rows;
+  }
+
+  async function copyText(text, button) {
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = button.textContent;
+      button.textContent = "Copied!";
+      setTimeout(() => button.textContent = original, 1200);
+    } catch {
+      alert("Copy failed. Select the text manually and copy it.");
+    }
+  }
+
+  function downloadFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function setStatus(message, type) {
+    status.textContent = message;
+    status.className = `status ${type}`;
+  }
+
+  function hideStatus() {
+    status.className = "status";
+    status.textContent = "";
+  }
+
+  function clearOutputs() {
+    currentTithiText = "";
+    currentFestivalsText = "";
+    tithiOutput.value = "";
+    festivalsOutput.value = "";
+    copyTithiBtn.disabled = true;
+    copyFestivalsBtn.disabled = true;
+    downloadTithiBtn.disabled = true;
+    downloadFestivalsBtn.disabled = true;
+  }
+})();
+</script>
+</body>
+</html>
