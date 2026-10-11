@@ -65,7 +65,23 @@
   .status.error { display: block; background: #fdecec; color: #9b1c1c; }
   .output {
     margin-bottom: 20px;
+    scroll-margin-top: 84px;
   }
+  .output-tabs {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+    margin-bottom: 12px;
+    background: #f5f5f5;
+  }
+  .output-tabs.visible { display: flex; }
+  .output-tabs button { background: #666; }
+  .output-tabs button:hover,
+  .output-tabs button:focus-visible { background: #222; }
   .output-header {
     display: flex;
     justify-content: space-between;
@@ -105,10 +121,10 @@
   <h1>Tithi Festival JSON Utility</h1>
   <p class="intro">
     Upload the CSV exported from your Google Sheet. The utility converts each festival row into
-    the two formats used by your project.
+    the three formats used by your project.
   </p>
 
-  <div class="panel">
+  <div class="panel" id="uploadPanel">
     <div class="upload-row">
       <input type="file" id="csvFile" accept=".csv,text/csv">
       <button id="generateBtn" disabled>Generate outputs</button>
@@ -121,11 +137,18 @@
       <code>Tithi</code>,
       <code>Tithi index</code>,
       <code>Festival Name (Key)</code>,
-      <code>English</code>
+      <code>English</code>,
+      <code>Gujarati</code>
     </div>
   </div>
 
-  <div class="panel output">
+  <nav class="output-tabs" id="outputTabs" aria-label="Output sections">
+    <button type="button" data-target="tithiSection">Tithi Festival</button>
+    <button type="button" data-target="englishSection">English</button>
+    <button type="button" data-target="gujaratiSection">Gujarati</button>
+  </nav>
+
+  <div class="panel output" id="tithiSection">
     <div class="output-header">
       <h2>1. TITHI_FESTIVALS</h2>
       <div class="button-group">
@@ -135,10 +158,10 @@
     </div>
     <textarea id="tithiOutput" readonly spellcheck="false"
       placeholder="Upload a CSV to generate the TITHI_FESTIVALS output..."></textarea>
-    <div class="note">This is JavaScript rather than strict JSON because it includes the <code>const TITHI_FESTIVALS =</code> declaration.</div>
+    <div class="note">This outputs only the array contents. Paste it inside your existing <code>const TITHI_FESTIVALS = []</code>.</div>
   </div>
 
-  <div class="panel output">
+  <div class="panel output" id="englishSection">
     <div class="output-header">
       <h2>2. festivals blob for en.json</h2>
       <div class="button-group">
@@ -150,6 +173,19 @@
       placeholder="Upload a CSV to generate the festivals object..."></textarea>
     <div class="note">This is the object you can place inside the <code>"festivals"</code> property of your en.json file.</div>
   </div>
+
+  <div class="panel output" id="gujaratiSection">
+    <div class="output-header">
+      <h2>3. festivals blob for gu.json</h2>
+      <div class="button-group">
+        <button class="secondary" id="copyGujaratiBtn" disabled>Copy</button>
+        <button id="downloadGujaratiBtn" disabled>Download .json</button>
+      </div>
+    </div>
+    <textarea id="gujaratiOutput" readonly spellcheck="false"
+      placeholder="Upload a CSV to generate the Gujarati festivals object..."></textarea>
+    <div class="note">Uses the same festival keys as en.json and the Gujarati values from your CSV's Gujarati column.</div>
+  </div>
 </div>
 
 <script>
@@ -160,23 +196,37 @@
     "Tithi",
     "Tithi index",
     "Festival Name (Key)",
-    "English"
+    "English",
+    "Gujarati"
   ];
 
   const csvFile = document.getElementById("csvFile");
   const generateBtn = document.getElementById("generateBtn");
   const status = document.getElementById("status");
+  const uploadPanel = document.getElementById("uploadPanel");
+  const outputTabs = document.getElementById("outputTabs");
 
   const tithiOutput = document.getElementById("tithiOutput");
   const festivalsOutput = document.getElementById("festivalsOutput");
+  const gujaratiOutput = document.getElementById("gujaratiOutput");
 
   const copyTithiBtn = document.getElementById("copyTithiBtn");
   const copyFestivalsBtn = document.getElementById("copyFestivalsBtn");
+  const copyGujaratiBtn = document.getElementById("copyGujaratiBtn");
   const downloadTithiBtn = document.getElementById("downloadTithiBtn");
   const downloadFestivalsBtn = document.getElementById("downloadFestivalsBtn");
+  const downloadGujaratiBtn = document.getElementById("downloadGujaratiBtn");
 
   let currentTithiText = "";
   let currentFestivalsText = "";
+  let currentGujaratiText = "";
+
+  outputTabs.querySelectorAll("button[data-target]").forEach(button => {
+    button.addEventListener("click", () => {
+      const section = document.getElementById(button.dataset.target);
+      if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 
   csvFile.addEventListener("change", () => {
     generateBtn.disabled = !csvFile.files.length;
@@ -227,11 +277,13 @@
         const monthIndex = record["Month index"];
         const tithiIndex = record["Tithi index"];
         const english = record["English"];
+        const gujarati = record["Gujarati"];
 
         if (!key) errors.push(`Row ${lineNumber}: Festival Name (Key) is empty.`);
         if (!monthIndex) errors.push(`Row ${lineNumber}: Month index is empty.`);
         if (!tithiIndex) errors.push(`Row ${lineNumber}: Tithi index is empty.`);
         if (!english) errors.push(`Row ${lineNumber}: English is empty.`);
+        if (!gujarati) errors.push(`Row ${lineNumber}: Gujarati is empty.`);
 
         if (key && seenKeys.has(key)) {
           errors.push(`Row ${lineNumber}: duplicate Festival Name (Key) "${key}".`);
@@ -250,6 +302,7 @@
           monthIndex &&
           tithiIndex &&
           english &&
+          gujarati &&
           Number.isInteger(Number(monthIndex)) &&
           Number.isInteger(Number(tithiIndex))
         ) {
@@ -257,7 +310,8 @@
             key,
             month: Number(monthIndex),
             tithi: Number(tithiIndex),
-            english
+            english,
+            gujarati
           });
         }
       });
@@ -265,22 +319,28 @@
       if (errors.length) {
         throw new Error(errors.join("\n"));
       }
-      console.log("festivals", festivals);
-      currentTithiText = buildTithiOutput2(festivals);
-      currentFestivalsText = buildFestivalsOutput(festivals);
+
+      currentTithiText = buildTithiOutput(festivals);
+      currentFestivalsText = buildFestivalsOutput(festivals, "english");
+      currentGujaratiText = buildFestivalsOutput(festivals, "gujarati");
 
       tithiOutput.value = currentTithiText;
       festivalsOutput.value = currentFestivalsText;
+      gujaratiOutput.value = currentGujaratiText;
 
       copyTithiBtn.disabled = false;
       copyFestivalsBtn.disabled = false;
+      copyGujaratiBtn.disabled = false;
       downloadTithiBtn.disabled = false;
       downloadFestivalsBtn.disabled = false;
+      downloadGujaratiBtn.disabled = false;
 
       setStatus(
         `Generated ${festivals.length} festival${festivals.length === 1 ? "" : "s"} successfully.`,
         "ok"
       );
+      uploadPanel.hidden = true;
+      outputTabs.classList.add("visible");
     } catch (error) {
       clearOutputs();
       setStatus(error.message || "Could not process the CSV.", "error");
@@ -289,36 +349,19 @@
 
   copyTithiBtn.addEventListener("click", () => copyText(currentTithiText, copyTithiBtn));
   copyFestivalsBtn.addEventListener("click", () => copyText(currentFestivalsText, copyFestivalsBtn));
+  copyGujaratiBtn.addEventListener("click", () => copyText(currentGujaratiText, copyGujaratiBtn));
 
   downloadTithiBtn.addEventListener("click", () => {
     downloadFile("tithi_festivals.js", currentTithiText, "text/javascript;charset=utf-8");
   });
 
   downloadFestivalsBtn.addEventListener("click", () => {
-    downloadFile("festivals.json", currentFestivalsText, "application/json;charset=utf-8");
+    downloadFile("festivals_en.json", currentFestivalsText, "application/json;charset=utf-8");
   });
 
-  function buildTithiOutput2(festivals) {
-    const obj = {};
-    const lines = festivals.map(f =>
-      `{ key: ${JSON.stringify(f.key)}, month: ${f.month}, tithi: ${f.tithi} },`
-    );
-
-    // console.log("lines", lines);
-
-    var str = '';
-    lines.forEach(function (line, index) {
-      str += line + '\n';
-    });
-
-    return "const TITHI_FESTIVALS = ["+str+"];";
-
-    // return lines; 
-    // return JSON.stringify(lines, null, 2)
-    // .replace(/\]$/, "];");
-      // .replace(/^\[/, "const TITHI_FESTIVALS = [")
-      
-  }
+  downloadGujaratiBtn.addEventListener("click", () => {
+    downloadFile("festivals_gu.json", currentGujaratiText, "application/json;charset=utf-8");
+  });
 
   function buildTithiOutput(festivals) {
     const lines = festivals.map(f =>
@@ -326,16 +369,16 @@
     );
 
     return [
-      "const TITHI_FESTIVALS = [",
+      "[",
       ...lines,
-      "];"
-    ].join("\\n");
+      "]"
+    ].join("\n");
   }
 
-  function buildFestivalsOutput(festivals) {
+  function buildFestivalsOutput(festivals, language) {
     const obj = {};
     festivals.forEach(f => {
-      obj[f.key] = f.english;
+      obj[f.key] = language === "gujarati" ? f.gujarati : f.english;
     });
 
     return JSON.stringify(obj, null, 2);
@@ -445,12 +488,16 @@
   function clearOutputs() {
     currentTithiText = "";
     currentFestivalsText = "";
+    currentGujaratiText = "";
     tithiOutput.value = "";
     festivalsOutput.value = "";
+    gujaratiOutput.value = "";
     copyTithiBtn.disabled = true;
     copyFestivalsBtn.disabled = true;
+    copyGujaratiBtn.disabled = true;
     downloadTithiBtn.disabled = true;
     downloadFestivalsBtn.disabled = true;
+    downloadGujaratiBtn.disabled = true;
   }
 })();
 </script>
