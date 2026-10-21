@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Write</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F3F0; --ink:#1F2421; --mute:#7E8681; --line:#D9DDD8; --accent:#3F6B5B;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  background:var(--bg); color:var(--ink);
+  display:flex; flex-direction:column;
+  font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+#t{
+  flex:1; min-height:0; width:100%; resize:none; border:0; outline:0; background:transparent;
+  color:var(--ink); caret-color:var(--accent);
+  font-family:Literata,Georgia,"Times New Roman",serif; font-size:1.25rem; line-height:1.75;
+  padding:12vh max(1.5rem,calc((100% - 40rem)/2)) 3rem;
+}
+#t::placeholder{color:var(--mute)}
+body.nocaret #t{caret-color:transparent}
+#t::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+.bar{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1.25rem;
+  padding:.75rem max(1.25rem,calc((100% - 52rem)/2));
+  font-size:.85rem; color:var(--mute); border-top:1px solid var(--line);
+  transition:opacity .6s ease;
+}
+body.typing .bar{opacity:.18}
+.group{display:flex; align-items:center; gap:.25rem}
+button{
+  font:inherit; color:inherit; background:none; border:0; border-radius:6px;
+  padding:.3rem .55rem; cursor:pointer;
+}
+button:hover{color:var(--ink)}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.time{
+  font-size:1.5rem; font-weight:500; color:var(--ink); min-width:4.6ch; text-align:center;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em;
+}
+.time.done{color:var(--accent)}
+#go{color:var(--ink); border:1px solid var(--line); padding:.3rem .9rem}
+#go:hover{border-color:var(--mute)}
+#chips[hidden]{display:none}
+@media (max-width:640px){ .bar{justify-content:center} #t{font-size:1.1rem} }
+@media (prefers-reduced-motion:reduce){ .bar{transition:none} }
+</style>
+</head>
+<body>
+<textarea id="t" placeholder="Start writing…" spellcheck="true" autofocus aria-label="Writing area"></textarea>
+
+<footer class="bar" id="bar">
+  <div class="group" role="group" aria-label="Timer mode">
+    <button id="mDown" aria-pressed="true">Countdown</button>
+    <button id="mUp" aria-pressed="false">Count up</button>
+    <span id="chips" class="group" role="group" aria-label="Countdown length">
+      <button data-min="15" aria-pressed="false">15</button>
+      <button data-min="25" aria-pressed="true">25</button>
+      <button data-min="50" aria-pressed="false">50</button>
+    </span>
+  </div>
+  <div class="group">
+    <span class="time" id="time" role="timer" aria-live="off">25:00</span>
+    <button id="go">Start</button>
+    <button id="reset">Reset</button>
+  </div>
+  <div class="group">
+    <span id="words">0 words</span>
+    <button id="caret" aria-pressed="false" aria-label="Hide the blinking cursor">Hide cursor</button>
+    <button id="theme" aria-label="Switch light or dark theme">Theme</button>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var t=$('t'), timeEl=$('time'), go=$('go'), words=$('words');
+  var store = {
+    get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
+    set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  };
+
+  /* ---- writing ---- */
+  t.value = store.get('w:text') || '';
+  var saveTimer;
+  function countWords(){
+    var n = (t.value.trim().match(/\S+/g)||[]).length;
+    words.textContent = n + (n===1?' word':' words');
+  }
+  t.addEventListener('input', function(){
+    countWords();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){store.set('w:text', t.value)}, 400);
+  });
+  countWords();
+
+  /* fade the bar while typing, bring it back on mouse/touch */
+  t.addEventListener('keydown', function(){document.body.classList.add('typing')});
+  ['mousemove','pointerdown','touchstart'].forEach(function(ev){
+    window.addEventListener(ev, function(){document.body.classList.remove('typing')}, {passive:true});
+  });
+  $('bar').addEventListener('focusin', function(){document.body.classList.remove('typing')});
+
+  /* ---- timer ---- */
+  var mode = store.get('w:mode')==='up' ? 'up' : 'down';
+  var mins = parseInt(store.get('w:mins'),10) || 25;
+  var elapsed = 0, startedAt = 0, running = false, finished = false, tick;
+  var baseTitle = document.title;
+
+  function current(){ return elapsed + (running ? Date.now()-startedAt : 0); }
+  function fmt(ms){
+    var s = Math.max(0, Math.floor(ms/1000)), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60;
+    var p = function(n){return n<10?'0'+n:''+n};
+    return (h ? h+':' : '') + p(m) + ':' + p(x);
+  }
+  function render(){
+    var ms = mode==='down' ? mins*60000 - current() : current();
+    if (mode==='down' && ms<=0 && running) return finish();
+    var label = fmt(mode==='down' ? Math.ceil(ms/1000)*1000 : ms);
+    timeEl.textContent = label;
+    timeEl.classList.toggle('done', finished);
+    document.title = running ? label + ' · ' + baseTitle : baseTitle;
+  }
+  function start(){
+    if (finished) reset();
+    running = true; startedAt = Date.now();
+    clearInterval(tick); tick = setInterval(render, 250);
+    go.textContent = 'Pause'; render();
+  }
+  function pause(){
+    elapsed = current(); running = false; clearInterval(tick);
+    go.textContent = 'Start'; render();
+  }
+  function reset(){
+    running = false; finished = false; elapsed = 0; clearInterval(tick);
+    go.textContent = 'Start'; render();
+  }
+  function finish(){
+    running = false; finished = true; clearInterval(tick); elapsed = mins*60000;
+    timeEl.textContent = '00:00'; timeEl.classList.add('done');
+    go.textContent = 'Start'; document.title = 'Time’s up · ' + baseTitle;
+    document.body.classList.remove('typing');
+    chime();
+  }
+  function chime(){
+    try{
+      var C = window.AudioContext || window.webkitAudioContext, a = new C();
+      [660, 880].forEach(function(f,i){
+        var o = a.createOscillator(), g = a.createGain(), at = a.currentTime + i*0.28;
+        o.frequency.value = f; o.connect(g); g.connect(a.destination);
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.18, at+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, at+0.6);
+        o.start(at); o.stop(at+0.65);
+      });
+    }catch(e){}
+  }
+
+  function setMode(m){
+    mode = m; store.set('w:mode', m);
+    $('mDown').setAttribute('aria-pressed', m==='down');
+    $('mUp').setAttribute('aria-pressed', m==='up');
+    $('chips').hidden = m!=='down';
+    reset();
+  }
+  function setMins(n){
+    mins = n; store.set('w:mins', n);
+    document.querySelectorAll('#chips button').forEach(function(b){
+      b.setAttribute('aria-pressed', parseInt(b.dataset.min,10)===n);
+    });
+    reset();
+  }
+
+  go.addEventListener('click', function(){ running ? pause() : start(); });
+  $('reset').addEventListener('click', reset);
+  $('mDown').addEventListener('click', function(){setMode('down')});
+  $('mUp').addEventListener('click', function(){setMode('up')});
+  document.querySelectorAll('#chips button').forEach(function(b){
+    b.addEventListener('click', function(){setMins(parseInt(b.dataset.min,10))});
+  });
+
+  /* ---- cursor ---- */
+  var cb = $('caret');
+  function setCaret(hide){
+    document.body.classList.toggle('nocaret', hide);
+    cb.setAttribute('aria-pressed', hide);
+    store.set('w:nocaret', hide ? '1' : '0');
+  }
+  cb.addEventListener('click', function(){
+    setCaret(!document.body.classList.contains('nocaret'));
+    t.focus();
+  });
+  setCaret(store.get('w:nocaret')==='1');
+
+  /* ---- theme ---- */
+  var saved = store.get('w:theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  $('theme').addEventListener('click', function(){
+    var root = document.documentElement, cur = root.getAttribute('data-theme');
+    if (!cur) cur = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var next = cur==='dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next); store.set('w:theme', next);
+  });
+
+  /* init */
+  setMode(mode); setMins(mins);
+  t.focus();
+})();
+</script>
+</body>
+</html>
