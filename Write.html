@@ -46,6 +46,7 @@ body.typing .dock{opacity:.18}
 body.folded.typing .dock{opacity:.4}
 .mini{display:none;position:absolute;right:4rem;bottom:10px;height:38px;padding:0 .75rem;align-items:center;gap:1rem;border-radius:100px;background:var(--bg);font-size:.85rem;color:var(--mute);font-variant-numeric:tabular-nums;pointer-events:none}
 body.folded .mini{display:flex}
+.mini .done{color:var(--accent)}
 .fold{position:absolute;right:0;bottom:10px;z-index:2;padding:10px 1.1rem;border-radius:100px;background:var(--bg);border:1px solid var(--fold-line);color:var(--fold-ink)}
 .fold svg,#theme svg{display:block}
 .fold svg{transition:transform .2s ease}
@@ -155,7 +156,8 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     if (mode==='down' && ms<=0 && running) return finish();
     var label = fmt(mode==='down' ? Math.ceil(ms/1000)*1000 : ms);
     timeEl.textContent = label;
-    miniTime.textContent = label; miniTime.hidden = !running;
+    miniTime.textContent = label; miniTime.hidden = !running && !finished;
+    miniTime.classList.toggle('done', finished);
     timeEl.classList.toggle('done', finished);
     document.title = running ? label + ' · ' + baseTitle : baseTitle;
   }
@@ -175,7 +177,8 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   }
   function finish(){
     running = false; finished = true; clearInterval(tick); elapsed = mins*60000;
-    timeEl.textContent = '00:00'; timeEl.classList.add('done'); miniTime.hidden = true;
+    timeEl.textContent = '00:00'; timeEl.classList.add('done');
+    miniTime.textContent = '00:00'; miniTime.hidden = false; miniTime.classList.add('done');
     go.textContent = 'Start'; document.title = 'Time’s up · ' + baseTitle;
     document.body.classList.remove('typing');
     chime();
