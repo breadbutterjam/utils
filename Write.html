@@ -40,7 +40,18 @@ body.nocaret #t{caret-color:transparent}
   font-size:.85rem; color:var(--mute); border-top:1px solid var(--line);
   transition:opacity .6s ease;
 }
-body.typing .bar{opacity:.18}
+body.typing .dock{opacity:.18}
+.dock{display:flex;flex-direction:column;transition:opacity .6s ease}
+.fold{align-self:center;padding:.1rem 1.1rem;color:var(--mute)}
+.fold svg,#theme svg{display:block}
+.fold svg{transition:transform .2s ease}
+body.folded .fold svg{transform:rotate(180deg)}
+body.folded .bar{display:none}
+#theme{padding:.3rem .45rem}
+#cmin{width:3.4rem;font:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--mute);border-radius:0;text-align:center;padding:.25rem 0;outline:0;-moz-appearance:textfield;appearance:textfield}
+#cmin::placeholder{color:var(--mute)}
+#cmin:focus{border-color:var(--accent)}
+#cmin::-webkit-inner-spin-button,#cmin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .group{display:flex; align-items:center; gap:.25rem}
 button{
   font:inherit; color:inherit; background:none; border:0; border-radius:6px;
@@ -58,20 +69,24 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 #go:hover{border-color:var(--mute)}
 #chips[hidden]{display:none}
 @media (max-width:640px){ .bar{justify-content:center} #t{font-size:1.1rem} }
-@media (prefers-reduced-motion:reduce){ .bar{transition:none} }
+@media (prefers-reduced-motion:reduce){ .bar,.dock,.fold svg{transition:none} }
 </style>
 </head>
 <body>
 <textarea id="t" placeholder="Start writing…" spellcheck="true" autofocus aria-label="Writing area"></textarea>
 
+<div class="dock">
+<button id="fold" class="fold" aria-expanded="true" aria-label="Hide toolbar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button>
 <footer class="bar" id="bar">
   <div class="group" role="group" aria-label="Timer mode">
     <button id="mDown" aria-pressed="true">Countdown</button>
     <button id="mUp" aria-pressed="false">Count up</button>
     <span id="chips" class="group" role="group" aria-label="Countdown length">
-      <button data-min="15" aria-pressed="false">15</button>
-      <button data-min="25" aria-pressed="true">25</button>
-      <button data-min="50" aria-pressed="false">50</button>
+      <button data-min="10" aria-pressed="false">10</button>
+      <button data-min="15" aria-pressed="true">15</button>
+      <button id="custom" aria-pressed="false">Custom</button>
+      <input id="cmin" type="number" min="1" max="999" step="1" inputmode="numeric" placeholder="min" aria-label="Custom minutes" hidden>
+      
     </span>
   </div>
   <div class="group">
@@ -82,9 +97,10 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   <div class="group">
     <span id="words">0 words</span>
     <button id="caret" aria-pressed="false" aria-label="Hide the blinking cursor">Hide cursor</button>
-    <button id="theme" aria-label="Switch light or dark theme">Theme</button>
+    <button id="theme" aria-label="Switch to dark theme"></button>
   </div>
 </footer>
+</div>
 
 <script>
 (function(){
@@ -118,7 +134,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 
   /* ---- timer ---- */
   var mode = store.get('w:mode')==='up' ? 'up' : 'down';
-  var mins = parseInt(store.get('w:mins'),10) || 25;
+  var mins = parseInt(store.get('w:mins'),10) || 15;
   var elapsed = 0, startedAt = 0, running = false, finished = false, tick;
   var baseTitle = document.title;
 
@@ -179,8 +195,9 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     reset();
   }
   function setMins(n){
-    mins = n; store.set('w:mins', n);
+    mins = n; store.set('w:mins', n); syncCustom();
     document.querySelectorAll('#chips button').forEach(function(b){
+      if (!b.dataset.min) return;
       b.setAttribute('aria-pressed', parseInt(b.dataset.min,10)===n);
     });
     reset();
@@ -191,8 +208,47 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   $('mDown').addEventListener('click', function(){setMode('down')});
   $('mUp').addEventListener('click', function(){setMode('up')});
   document.querySelectorAll('#chips button').forEach(function(b){
+    if (!b.dataset.min) return;
     b.addEventListener('click', function(){setMins(parseInt(b.dataset.min,10))});
   });
+
+  /* ---- custom minutes ---- */
+  var cmin = $('cmin');
+  function syncCustom(){
+    var c = mins!==10 && mins!==15;
+    $('custom').setAttribute('aria-pressed', c);
+    cmin.hidden = !c;
+    if (c) cmin.value = mins;
+  }
+  $('custom').addEventListener('click', function(){
+    cmin.hidden = false;
+    if (mins===10 || mins===15) cmin.value = '';
+    this.setAttribute('aria-pressed', true);
+    cmin.focus(); cmin.select();
+  });
+  cmin.addEventListener('change', function(){
+    var n = Math.round(parseFloat(cmin.value));
+    if (n >= 1 && n <= 999 && n !== mins) setMins(n);
+  });
+  cmin.addEventListener('blur', syncCustom);
+  cmin.addEventListener('keydown', function(e){
+    if (e.key==='Enter') cmin.blur();
+    if (e.key==='Escape'){ cmin.value = ''; cmin.blur(); }
+  });
+
+  /* ---- toolbar fold ---- */
+  var foldBtn = $('fold');
+  function setFold(f){
+    document.body.classList.toggle('folded', f);
+    foldBtn.setAttribute('aria-expanded', !f);
+    foldBtn.setAttribute('aria-label', f ? 'Show toolbar' : 'Hide toolbar');
+    store.set('w:folded', f ? '1' : '0');
+  }
+  foldBtn.addEventListener('click', function(){
+    setFold(!document.body.classList.contains('folded'));
+    t.focus();
+  });
+  setFold(store.get('w:folded')==='1');
 
   /* ---- cursor ---- */
   var cb = $('caret');
@@ -210,11 +266,22 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   /* ---- theme ---- */
   var saved = store.get('w:theme');
   if (saved) document.documentElement.setAttribute('data-theme', saved);
+  var ICON = function(d){return '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'};
+  var MOON = ICON('<path d="M14 8.5A6 6 0 1 1 7.5 2A4.7 4.7 0 0 0 14 8.5z"/>');
+  var SUN = ICON('<circle cx="8" cy="8" r="2.8"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>');
+  function themeIcon(){
+    var cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var toDark = cur !== 'dark', b = $('theme'), label = toDark ? 'Switch to dark theme' : 'Switch to light theme';
+    b.innerHTML = toDark ? MOON : SUN;
+    b.setAttribute('aria-label', label); b.title = label;
+  }
+  themeIcon();
+  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeIcon); }catch(e){}
   $('theme').addEventListener('click', function(){
     var root = document.documentElement, cur = root.getAttribute('data-theme');
     if (!cur) cur = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     var next = cur==='dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next); store.set('w:theme', next);
+    root.setAttribute('data-theme', next); store.set('w:theme', next); themeIcon();
   });
 
   /* init */
