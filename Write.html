@@ -34,6 +34,8 @@ body{
 }
 #t::placeholder{color:var(--mute)}
 body.nocaret #t{caret-color:transparent}
+#t{scrollbar-width:thin;scrollbar-color:transparent transparent}
+#t:hover{scrollbar-color:var(--fold-line) transparent}
 #t::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
 .bar{
   display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1.25rem;
