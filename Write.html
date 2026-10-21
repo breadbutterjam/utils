@@ -10,13 +10,14 @@
 <style>
 :root{
   --bg:#F1F3F0; --ink:#1F2421; --mute:#7E8681; --line:#D9DDD8; --accent:#3F6B5B;
+  --fold-line:#B6BDB8; --fold-ink:#5F6762;
   color-scheme:light; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;color-scheme:dark}
+  :root:not([data-theme="light"]){--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;--fold-line:#7C847F;--fold-ink:#7C847F;color-scheme:dark}
 }
-:root[data-theme="dark"]{--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;color-scheme:dark}
+:root[data-theme="dark"]{--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;--fold-line:#7C847F;--fold-ink:#7C847F;color-scheme:dark}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%;margin:0}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -36,13 +37,16 @@ body.nocaret #t{caret-color:transparent}
 #t::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
 .bar{
   display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1.25rem;
-  padding:.75rem max(1.25rem,calc((100% - 52rem)/2));
+  padding:.75rem max(1.25rem,calc((100% - 52rem)/2)); padding-right:max(4.5rem,calc((100% - 52rem)/2));
   font-size:.85rem; color:var(--mute); border-top:1px solid var(--line);
   transition:opacity .6s ease;
 }
 body.typing .dock{opacity:.18}
-.dock{display:flex;flex-direction:column;transition:opacity .6s ease}
-.fold{align-self:center;padding:.1rem 1.1rem;color:var(--mute)}
+.dock{position:relative;display:flex;flex-direction:column;transition:opacity .6s ease}
+body.folded.typing .dock{opacity:.4}
+.mini{display:none;position:absolute;right:4rem;bottom:10px;height:38px;padding:0 .75rem;align-items:center;gap:1rem;border-radius:100px;background:var(--bg);font-size:.85rem;color:var(--mute);font-variant-numeric:tabular-nums;pointer-events:none}
+body.folded .mini{display:flex}
+.fold{position:absolute;right:0;bottom:10px;z-index:2;padding:10px 1.1rem;border-radius:100px;background:var(--bg);border:1px solid var(--fold-line);color:var(--fold-ink)}
 .fold svg,#theme svg{display:block}
 .fold svg{transition:transform .2s ease}
 body.folded .fold svg{transform:rotate(180deg)}
@@ -77,6 +81,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 
 <div class="dock">
 <button id="fold" class="fold" aria-expanded="true" aria-label="Hide toolbar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button>
+<div class="mini" id="mini" aria-hidden="true"><span id="miniTime" hidden></span><span id="miniWords"></span></div>
 <footer class="bar" id="bar">
   <div class="group" role="group" aria-label="Timer mode">
     <button id="mDown" aria-pressed="true">Countdown</button>
@@ -105,7 +110,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 <script>
 (function(){
   var $ = function(id){return document.getElementById(id)};
-  var t=$('t'), timeEl=$('time'), go=$('go'), words=$('words');
+  var t=$('t'), timeEl=$('time'), go=$('go'), words=$('words'), miniTime=$('miniTime'), miniWords=$('miniWords');
   var store = {
     get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
     set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -117,6 +122,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   function countWords(){
     var n = (t.value.trim().match(/\S+/g)||[]).length;
     words.textContent = n + (n===1?' word':' words');
+    miniWords.textContent = words.textContent;
   }
   t.addEventListener('input', function(){
     countWords();
@@ -149,6 +155,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     if (mode==='down' && ms<=0 && running) return finish();
     var label = fmt(mode==='down' ? Math.ceil(ms/1000)*1000 : ms);
     timeEl.textContent = label;
+    miniTime.textContent = label; miniTime.hidden = !running;
     timeEl.classList.toggle('done', finished);
     document.title = running ? label + ' · ' + baseTitle : baseTitle;
   }
@@ -168,7 +175,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   }
   function finish(){
     running = false; finished = true; clearInterval(tick); elapsed = mins*60000;
-    timeEl.textContent = '00:00'; timeEl.classList.add('done');
+    timeEl.textContent = '00:00'; timeEl.classList.add('done'); miniTime.hidden = true;
     go.textContent = 'Start'; document.title = 'Time’s up · ' + baseTitle;
     document.body.classList.remove('typing');
     chime();
