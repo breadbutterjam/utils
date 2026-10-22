@@ -9,7 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg: #04040e; --ink:#1F2421; --mute:#7E8681; --line:#D9DDD8; --accent:#3F6B5B;
+  --bg:#F1F3F0; 
+  --ink:#1F2421; 
+  --mute:#7E8681; 
+  --line:#D9DDD8; --accent:#3F6B5B;
   --fold-line:#B6BDB8; --fold-ink:#5F6762;
   color-scheme:light; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
@@ -17,7 +20,10 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;--fold-line:#7C847F;--fold-ink:#7C847F;color-scheme:dark}
 }
-:root[data-theme="dark"]{--bg:#161A19;--ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;--fold-line:#7C847F;--fold-ink:#7C847F;color-scheme:dark}
+:root[data-theme="dark"]{
+  /* --bg:#161A19; */
+  --bg: #04040e;
+  --ink:#DCE0DB;--mute:#7C847F;--line:#2A302E;--accent:#8FBBA9;--fold-line:#7C847F;--fold-ink:#7C847F;color-scheme:dark}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%;margin:0}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -50,25 +56,11 @@ body.folded.typing .dock{opacity:.4}
 body.folded .mini{display:flex}
 .mini .done{color:var(--accent)}
 .fold{position:absolute;right:0;bottom:10px;z-index:2;padding:10px 1.1rem;border-radius:100px;background:var(--bg);border:1px solid var(--fold-line);color:var(--fold-ink)}
-.fold svg,#theme svg,#gear svg{display:block}
+.fold svg,#theme svg{display:block}
 .fold svg{transition:transform .2s ease}
 body.folded .fold svg{transform:rotate(180deg)}
 body.folded .bar{display:none}
-#theme,#gear{padding:.3rem .45rem}
-#gear[aria-expanded="true"]{color:var(--ink)}
-.panel{position:absolute;right:.75rem;bottom:calc(100% + 10px);z-index:3;width:min(18rem,calc(100vw - 1.5rem));padding:.4rem 1rem .8rem;border-radius:14px;background:var(--bg);border:1px solid var(--fold-line);box-shadow:0 8px 28px rgba(0,0,0,.12);color:var(--ink);font-size:.9rem}
-.panel[hidden]{display:none}
-.phead{display:flex;align-items:center;justify-content:space-between;padding:.35rem 0}
-.phead span{font-weight:500}
-.phead button{padding:.3rem .35rem;color:var(--mute)}
-.phead svg{display:block}
-.pgroup{margin:.7rem 0 .1rem;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
-.row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.5rem 0;cursor:pointer}
-.row small{display:block;margin-top:.1rem;font-size:.75rem;color:var(--mute)}
-.panel .sw{position:relative;flex:none;width:34px;height:20px;padding:0;border-radius:100px;border:1px solid var(--fold-line);background:transparent}
-.panel .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--fold-ink);transition:transform .15s ease,background .15s ease}
-.panel .sw[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
-.panel .sw[aria-pressed="true"]::after{transform:translateX(14px);background:var(--bg)}
+#theme{padding:.3rem .45rem}
 #cmin{width:3.4rem;font:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--mute);border-radius:0;text-align:center;padding:.25rem 0;outline:0;-moz-appearance:textfield;appearance:textfield}
 #cmin::placeholder{color:var(--mute)}
 #cmin:focus{border-color:var(--accent)}
@@ -90,7 +82,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 #go:hover{border-color:var(--mute)}
 #chips[hidden]{display:none}
 @media (max-width:640px){ .bar{justify-content:center} #t{font-size:1.1rem} }
-@media (prefers-reduced-motion:reduce){ .bar,.dock,.fold svg,.panel .sw::after{transition:none} }
+@media (prefers-reduced-motion:reduce){ .bar,.dock,.fold svg{transition:none} }
 </style>
 </head>
 <body>
@@ -99,15 +91,6 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 <div class="dock">
 <button id="fold" class="fold" aria-expanded="true" aria-label="Hide toolbar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6"/></svg></button>
 <div class="mini" id="mini" aria-hidden="true"><span id="miniTime" hidden></span><span id="miniWords"></span></div>
-<div class="panel" id="panel" role="dialog" aria-label="Settings" hidden>
-  <div class="phead"><span>Settings</span><button id="pclose" aria-label="Close settings"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
-  <div class="pgroup">Writing</div>
-  <label class="row"><span>Spell check</span><button type="button" class="sw" id="spell" aria-pressed="true" aria-label="Spell check"></button></label>
-  <label class="row"><span>Hide cursor</span><button type="button" class="sw" id="caret" aria-pressed="false" aria-label="Hide cursor"></button></label>
-  <label class="row"><span>Character count</span><button type="button" class="sw" id="chars" aria-pressed="false" aria-label="Character count"></button></label>
-  <div class="pgroup">Timer</div>
-  <label class="row"><span>Sound<small>Chime when a countdown ends</small></span><button type="button" class="sw" id="sound" aria-pressed="true" aria-label="Sound"></button></label>
-</div>
 <footer class="bar" id="bar">
   <div class="group" role="group" aria-label="Timer mode">
     <button id="mDown" aria-pressed="true">Countdown</button>
@@ -127,9 +110,8 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   </div>
   <div class="group">
     <span id="words">0 words</span>
-    
+    <button id="caret" aria-pressed="false" aria-label="Hide the blinking cursor">Hide cursor</button>
     <button id="theme" aria-label="Switch to dark theme"></button>
-    <button id="gear" aria-label="Settings" title="Settings" aria-expanded="false" aria-controls="panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div>
 </footer>
 </div>
@@ -138,7 +120,6 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
 (function(){
   var $ = function(id){return document.getElementById(id)};
   var t=$('t'), timeEl=$('time'), go=$('go'), words=$('words'), miniTime=$('miniTime'), miniWords=$('miniWords');
-  var showChars = false, soundOn = true;
   var store = {
     get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
     set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -149,9 +130,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   var saveTimer;
   function countWords(){
     var n = (t.value.trim().match(/\S+/g)||[]).length;
-    var c = t.value.length, txt = n + (n===1?' word':' words');
-    if (showChars) txt += ' · ' + c.toLocaleString() + (c===1?' character':' characters');
-    words.textContent = txt;
+    words.textContent = n + (n===1?' word':' words');
     miniWords.textContent = words.textContent;
   }
   t.addEventListener('input', function(){
@@ -162,7 +141,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   countWords();
 
   /* fade the bar while typing, bring it back on mouse/touch */
-  t.addEventListener('keydown', function(){ if (panel && !panel.hidden) return; document.body.classList.add('typing'); });
+  t.addEventListener('keydown', function(){document.body.classList.add('typing')});
   ['mousemove','pointerdown','touchstart'].forEach(function(ev){
     window.addEventListener(ev, function(){document.body.classList.remove('typing')}, {passive:true});
   });
@@ -213,7 +192,6 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     chime();
   }
   function chime(){
-    if (!soundOn) return;
     try{
       var C = window.AudioContext || window.webkitAudioContext, a = new C();
       [660, 880].forEach(function(f,i){
@@ -252,35 +230,6 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     b.addEventListener('click', function(){setMins(parseInt(b.dataset.min,10))});
   });
 
-  /* ---- settings panel ---- */
-  var panel = $('panel'), gear = $('gear');
-  function openPanel(){
-    panel.hidden = false; gear.setAttribute('aria-expanded', 'true');
-    document.body.classList.remove('typing');
-    var f = panel.querySelector('.sw'); if (f) f.focus();
-  }
-  function closePanel(refocus){
-    panel.hidden = true; gear.setAttribute('aria-expanded', 'false');
-    if (refocus) t.focus();
-  }
-  gear.addEventListener('click', function(){ panel.hidden ? openPanel() : closePanel(true); });
-  $('pclose').addEventListener('click', function(){ closePanel(true); });
-  document.addEventListener('keydown', function(e){ if (e.key==='Escape' && !panel.hidden) closePanel(true); });
-  document.addEventListener('pointerdown', function(e){
-    if (!panel.hidden && !panel.contains(e.target) && !gear.contains(e.target)) closePanel(false);
-  });
-  function bindSwitch(id, fn){
-    var b = $(id);
-    b.addEventListener('click', function(){
-      var on = b.getAttribute('aria-pressed') !== 'true';
-      b.setAttribute('aria-pressed', on);
-      fn(on);
-    });
-  }
-  bindSwitch('spell', function(on){ t.spellcheck = on; });
-  bindSwitch('sound', function(on){ soundOn = on; });
-  bindSwitch('chars', function(on){ showChars = on; countWords(); });
-
   /* ---- custom minutes ---- */
   var cmin = $('cmin');
   function syncCustom(){
@@ -312,7 +261,6 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
     foldBtn.setAttribute('aria-expanded', !f);
     foldBtn.setAttribute('aria-label', f ? 'Show toolbar' : 'Hide toolbar');
     store.set('w:folded', f ? '1' : '0');
-    if (f) closePanel(false);
   }
   foldBtn.addEventListener('click', function(){
     setFold(!document.body.classList.contains('folded'));
@@ -329,6 +277,7 @@ button[aria-pressed="true"]{color:var(--ink); background:color-mix(in srgb,var(-
   }
   cb.addEventListener('click', function(){
     setCaret(!document.body.classList.contains('nocaret'));
+    t.focus();
   });
   setCaret(store.get('w:nocaret')==='1');
 
